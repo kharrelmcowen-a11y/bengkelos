@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { logout } from "./actions";
@@ -11,6 +12,21 @@ export default async function DashboardPage() {
       <div className="mx-auto max-w-md">
         <h1 className="text-lg font-semibold">Halo, {session.name}</h1>
         <p className="text-sm text-neutral-400 capitalize">{session.role}</p>
+
+        <div className="mt-6 space-y-3">
+          <Link
+            href="/tickets/new"
+            className="block rounded-lg bg-white px-4 py-3 text-center font-medium text-neutral-950"
+          >
+            + Tiket servis baru
+          </Link>
+          <Link
+            href="/tickets"
+            className="block rounded-lg border border-neutral-700 px-4 py-3 text-center text-neutral-300 hover:bg-neutral-900"
+          >
+            Lihat tiket aktif
+          </Link>
+        </div>
 
         <form action={logout} className="mt-6">
           <button
