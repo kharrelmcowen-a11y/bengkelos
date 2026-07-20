@@ -169,6 +169,44 @@ export const addPayment = authActionClient
     revalidatePath(`/tickets/${parsedInput.ticketId}`);
   });
 
+const deletePaymentSchema = z.object({
+  paymentId: z.string().uuid(),
+});
+
+export const deletePayment = authActionClient
+  .inputSchema(deletePaymentSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { session } = ctx;
+    const supabase = createAdminClient();
+
+    const { data: payment } = await supabase
+      .from("payments")
+      .select("id, ticket_id, service_tickets(status)")
+      .eq("id", parsedInput.paymentId)
+      .eq("shop_id", session.shopId)
+      .maybeSingle();
+
+    if (!payment) throw new Error("Pembayaran tidak ditemukan");
+
+    const ticket = Array.isArray(payment.service_tickets)
+      ? payment.service_tickets[0]
+      : payment.service_tickets;
+
+    if (ticket?.status === "completed") {
+      throw new Error("Tidak bisa hapus pembayaran pada tiket yang sudah selesai");
+    }
+
+    const { error } = await supabase
+      .from("payments")
+      .delete()
+      .eq("id", parsedInput.paymentId)
+      .eq("shop_id", session.shopId);
+
+    if (error) throw new Error("Gagal hapus pembayaran");
+
+    revalidatePath(`/tickets/${payment.ticket_id}`);
+  });
+
 const completeTicketSchema = z.object({
   ticketId: z.string().uuid(),
 });
@@ -187,6 +225,27 @@ export const completeTicket = authActionClient
       .maybeSingle();
 
     if (!ticket || ticket.status === "completed") return;
+
+    const [{ data: items }, { data: payments }] = await Promise.all([
+      supabase
+        .from("ticket_items")
+        .select("quantity, unit_price")
+        .eq("ticket_id", parsedInput.ticketId),
+      supabase
+        .from("payments")
+        .select("amount")
+        .eq("ticket_id", parsedInput.ticketId),
+    ]);
+
+    const total = (items ?? []).reduce(
+      (sum, item) => sum + item.quantity * item.unit_price,
+      0,
+    );
+    const paid = (payments ?? []).reduce((sum, p) => sum + p.amount, 0);
+
+    if (paid < total) {
+      throw new Error("Tiket belum lunas, tidak bisa diselesaikan");
+    }
 
     const { data: stockedItems } = await supabase
       .from("ticket_items")

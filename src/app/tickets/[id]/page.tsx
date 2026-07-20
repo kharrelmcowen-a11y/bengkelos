@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ItemForm } from "./ItemForm";
 import { PaymentForm } from "./PaymentForm";
+import { DeletePaymentButton } from "./DeletePaymentButton";
 import { CompleteButton } from "./CompleteButton";
 import { formatIDR } from "@/lib/format";
 import { PageShell } from "@/components/page-shell";
@@ -153,7 +154,12 @@ export default async function TicketDetailPage({
                   className="flex items-center justify-between p-3 text-sm"
                 >
                   <span className="capitalize">{payment.method}</span>
-                  <span>{formatIDR(payment.amount)}</span>
+                  <div className="flex items-center gap-2">
+                    <span>{formatIDR(payment.amount)}</span>
+                    {!isCompleted && (
+                      <DeletePaymentButton paymentId={payment.id} />
+                    )}
+                  </div>
                 </div>
               ))
             )}
