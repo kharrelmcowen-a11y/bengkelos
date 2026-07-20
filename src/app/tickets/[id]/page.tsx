@@ -5,14 +5,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ItemForm } from "./ItemForm";
 import { PaymentForm } from "./PaymentForm";
 import { CompleteButton } from "./CompleteButton";
-
-function formatIDR(amount: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+import { formatIDR } from "@/lib/format";
+import { PageShell } from "@/components/page-shell";
+import { PageHeader } from "@/components/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import { Receipt } from "lucide-react";
 
 export default async function TicketDetailPage({
   params,
@@ -71,40 +70,35 @@ export default async function TicketDetailPage({
   const isCompleted = ticket.status === "completed";
 
   return (
-    <main className="min-h-screen bg-neutral-950 p-6 text-white">
-      <div className="mx-auto max-w-2xl">
-        <Link
-          href="/tickets"
-          className="text-sm text-neutral-400 hover:text-white"
-        >
-          &larr; Tiket aktif
-        </Link>
-
-        <div className="mt-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold">{customer?.name}</h1>
-            <p className="text-sm text-neutral-400">
-              {vehicle?.plate_number} — {vehicle?.brand} {vehicle?.model}
-            </p>
-          </div>
-          <span className="rounded-full bg-neutral-800 px-3 py-1 text-xs capitalize text-neutral-300">
+    <PageShell>
+      <PageHeader
+        backHref="/tickets"
+        backLabel="Tiket aktif"
+        title={customer?.name ?? ""}
+        description={`${vehicle?.plate_number ?? ""} — ${vehicle?.brand ?? ""} ${vehicle?.model ?? ""}`}
+        action={
+          <Badge variant="secondary" className="capitalize">
             {ticket.status}
-          </span>
-        </div>
+          </Badge>
+        }
+      />
 
-        {ticket.notes && (
-          <p className="mt-3 rounded-lg bg-neutral-900 p-3 text-sm text-neutral-300">
-            {ticket.notes}
-          </p>
-        )}
+      {ticket.notes && (
+        <Card className="mb-6 p-3">
+          <p className="text-sm text-muted-foreground">{ticket.notes}</p>
+        </Card>
+      )}
 
-        <section className="mt-6">
-          <h2 className="text-sm font-medium text-neutral-400">
-            Item servis
-          </h2>
-          <div className="mt-2 divide-y divide-neutral-800 rounded-lg border border-neutral-800">
+      <section className="mt-6">
+        <h2 className="text-sm font-medium text-muted-foreground">
+          Item servis
+        </h2>
+        <Card className="mt-2">
+          <CardContent className="divide-y divide-border p-0">
             {(items ?? []).length === 0 ? (
-              <p className="p-3 text-sm text-neutral-500">Belum ada item.</p>
+              <p className="p-3 text-sm text-muted-foreground">
+                Belum ada item.
+              </p>
             ) : (
               (items ?? []).map((item) => (
                 <div
@@ -113,7 +107,7 @@ export default async function TicketDetailPage({
                 >
                   <span>
                     {item.description}{" "}
-                    <span className="text-neutral-500">
+                    <span className="text-muted-foreground">
                       x{item.quantity}
                     </span>
                   </span>
@@ -121,22 +115,21 @@ export default async function TicketDetailPage({
                 </div>
               ))
             )}
-          </div>
-          {!isCompleted && (
-            <ItemForm
-              ticketId={ticket.id}
-              inventoryItems={inventoryItems ?? []}
-            />
-          )}
-        </section>
+          </CardContent>
+        </Card>
+        {!isCompleted && (
+          <ItemForm ticketId={ticket.id} inventoryItems={inventoryItems ?? []} />
+        )}
+      </section>
 
-        <section className="mt-6">
-          <h2 className="text-sm font-medium text-neutral-400">
-            Pembayaran
-          </h2>
-          <div className="mt-2 divide-y divide-neutral-800 rounded-lg border border-neutral-800">
+      <section className="mt-6">
+        <h2 className="text-sm font-medium text-muted-foreground">
+          Pembayaran
+        </h2>
+        <Card className="mt-2">
+          <CardContent className="divide-y divide-border p-0">
             {(payments ?? []).length === 0 ? (
-              <p className="p-3 text-sm text-neutral-500">
+              <p className="p-3 text-sm text-muted-foreground">
                 Belum ada pembayaran.
               </p>
             ) : (
@@ -150,38 +143,39 @@ export default async function TicketDetailPage({
                 </div>
               ))
             )}
-          </div>
-          {!isCompleted && <PaymentForm ticketId={ticket.id} />}
-        </section>
+          </CardContent>
+        </Card>
+        {!isCompleted && <PaymentForm ticketId={ticket.id} />}
+      </section>
 
-        <section className="mt-6 space-y-1 rounded-lg bg-neutral-900 p-4 text-sm">
-          <div className="flex justify-between">
-            <span className="text-neutral-400">Total</span>
-            <span>{formatIDR(total)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-neutral-400">Dibayar</span>
-            <span>{formatIDR(paid)}</span>
-          </div>
-          <div className="flex justify-between font-medium">
-            <span>Sisa</span>
-            <span>{formatIDR(balance)}</span>
-          </div>
-        </section>
+      <Card className="mt-6 space-y-1 p-4 text-sm">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Total</span>
+          <span>{formatIDR(total)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Dibayar</span>
+          <span>{formatIDR(paid)}</span>
+        </div>
+        <div className="flex justify-between font-medium">
+          <span>Sisa</span>
+          <span>{formatIDR(balance)}</span>
+        </div>
+      </Card>
 
-        {!isCompleted && (
-          <CompleteButton ticketId={ticket.id} balance={balance} />
-        )}
+      {!isCompleted && (
+        <CompleteButton ticketId={ticket.id} balance={balance} />
+      )}
 
-        {isCompleted && (
-          <Link
-            href={`/tickets/${ticket.id}/receipt`}
-            className="mt-6 block rounded-lg bg-white py-3 text-center font-medium text-neutral-950"
-          >
-            Lihat struk
-          </Link>
-        )}
-      </div>
-    </main>
+      {isCompleted && (
+        <Link
+          href={`/tickets/${ticket.id}/receipt`}
+          className={buttonVariants({ className: "mt-6 w-full" })}
+        >
+          <Receipt className="size-4" />
+          Lihat struk
+        </Link>
+      )}
+    </PageShell>
   );
 }

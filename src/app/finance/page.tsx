@@ -2,14 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-function formatIDR(amount: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+import { formatIDR } from "@/lib/format";
+import { PageShell } from "@/components/page-shell";
+import { PageHeader } from "@/components/page-header";
+import { Card } from "@/components/ui/card";
 
 type TicketItemRow = {
   quantity: number;
@@ -75,51 +71,47 @@ export default async function FinancePage() {
   const netProfit = grossProfit - totalExpenses;
 
   return (
-    <main className="min-h-screen bg-neutral-950 p-6 text-white">
-      <div className="mx-auto max-w-2xl">
-        <h1 className="text-lg font-semibold">Laporan keuangan</h1>
-        <p className="text-sm text-neutral-400 capitalize">{monthLabel}</p>
+    <PageShell>
+      <PageHeader
+        title="Laporan keuangan"
+        description={monthLabel}
+        backHref="/dashboard"
+        backLabel="Dashboard"
+      />
 
-        <div className="mt-6 space-y-1 rounded-lg bg-neutral-900 p-4 text-sm">
-          <div className="flex justify-between">
-            <span className="text-neutral-400">Pendapatan</span>
-            <span>{formatIDR(revenue)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-neutral-400">Modal barang (COGS)</span>
-            <span>-{formatIDR(cogs)}</span>
-          </div>
-          <div className="flex justify-between border-t border-neutral-800 pt-1 font-medium">
-            <span>Laba kotor</span>
-            <span>{formatIDR(grossProfit)}</span>
-          </div>
-          <div className="mt-2 flex justify-between">
-            <span className="text-neutral-400">Pengeluaran</span>
-            <span>-{formatIDR(totalExpenses)}</span>
-          </div>
-          <div className="flex justify-between border-t border-neutral-800 pt-1 text-base font-semibold">
-            <span>Laba bersih</span>
-            <span className={netProfit < 0 ? "text-red-400" : ""}>
-              {formatIDR(netProfit)}
-            </span>
-          </div>
+      <Card className="space-y-1 p-4 text-sm">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Pendapatan</span>
+          <span>{formatIDR(revenue)}</span>
         </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Modal barang (COGS)</span>
+          <span>-{formatIDR(cogs)}</span>
+        </div>
+        <div className="flex justify-between border-t border-border pt-1 font-medium">
+          <span>Laba kotor</span>
+          <span>{formatIDR(grossProfit)}</span>
+        </div>
+        <div className="mt-2 flex justify-between">
+          <span className="text-muted-foreground">Pengeluaran</span>
+          <span>-{formatIDR(totalExpenses)}</span>
+        </div>
+        <div className="flex justify-between border-t border-border pt-1 text-base font-semibold">
+          <span>Laba bersih</span>
+          <span className={netProfit < 0 ? "text-destructive" : ""}>
+            {formatIDR(netProfit)}
+          </span>
+        </div>
+      </Card>
 
-        <div className="mt-6 flex gap-4">
-          <Link
-            href="/expenses"
-            className="text-sm text-neutral-400 hover:text-white"
-          >
-            Kelola pengeluaran
-          </Link>
-          <Link
-            href="/dashboard"
-            className="text-sm text-neutral-400 hover:text-white"
-          >
-            &larr; Kembali ke dashboard
-          </Link>
-        </div>
+      <div className="mt-6">
+        <Link
+          href="/expenses"
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          Kelola pengeluaran
+        </Link>
       </div>
-    </main>
+    </PageShell>
   );
 }

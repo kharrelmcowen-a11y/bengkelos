@@ -3,46 +3,62 @@
 import { useAction } from "next-safe-action/hooks";
 import { loginWithPin } from "./actions";
 import { firstActionError } from "@/lib/action-error";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginPage() {
   const { execute, isExecuting, result } = useAction(loginWithPin);
   const errorMessage = firstActionError(result);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-neutral-950 p-4">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const pin = String(new FormData(e.currentTarget).get("pin") ?? "");
-          execute({ pin });
-        }}
-        className="w-full max-w-xs rounded-2xl bg-neutral-900 p-6 shadow-xl"
-      >
-        <h1 className="mb-1 text-lg font-semibold text-white">BengkelOS</h1>
-        <p className="mb-6 text-sm text-neutral-400">Masukkan PIN staff</p>
+    <main className="flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-xs">
+        <CardHeader>
+          <h1 className="text-lg font-semibold">BengkelOS</h1>
+          <p className="text-sm text-muted-foreground">Masukkan PIN staff</p>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const pin = String(
+                new FormData(e.currentTarget).get("pin") ?? "",
+              );
+              execute({ pin });
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="pin" className="sr-only">
+                PIN
+              </Label>
+              <Input
+                id="pin"
+                name="pin"
+                type="password"
+                inputMode="numeric"
+                autoFocus
+                maxLength={6}
+                placeholder="••••"
+                className="h-14 text-center text-2xl tracking-widest"
+              />
+            </div>
 
-        <input
-          name="pin"
-          type="password"
-          inputMode="numeric"
-          autoFocus
-          maxLength={6}
-          placeholder="••••"
-          className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3 text-center text-2xl tracking-widest text-white outline-none focus:border-neutral-500"
-        />
+            {errorMessage && (
+              <Alert variant="destructive">
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
 
-        {errorMessage && (
-          <p className="mt-3 text-sm text-red-400">{errorMessage}</p>
-        )}
-
-        <button
-          type="submit"
-          disabled={isExecuting}
-          className="mt-4 w-full rounded-lg bg-white py-3 font-medium text-neutral-950 disabled:opacity-50"
-        >
-          {isExecuting ? "Memeriksa..." : "Masuk"}
-        </button>
-      </form>
+            <Button type="submit" disabled={isExecuting} className="w-full">
+              {isExecuting ? "Memeriksa..." : "Masuk"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </main>
   );
 }

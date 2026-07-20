@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { addTicketItem } from "../actions";
 import { firstActionError } from "@/lib/action-error";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type InventoryOption = {
   id: string;
@@ -54,7 +57,7 @@ export function ItemForm({
         <select
           value={inventoryItemId}
           onChange={(e) => handleSelectInventory(e.target.value)}
-          className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-neutral-500"
+          className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
         >
           <option value="">Item bebas (bukan dari stok)</option>
           {inventoryItems.map((item) => (
@@ -65,25 +68,24 @@ export function ItemForm({
         </select>
       )}
 
-      <input
+      <Input
         name="description"
         placeholder="Deskripsi (ganti oli, servis rem, dll)"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         required
-        className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-neutral-500"
       />
       <div className="flex gap-2">
-        <input
+        <Input
           name="quantity"
           type="number"
           step="0.01"
           min="0.01"
           defaultValue={1}
           required
-          className="w-24 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-neutral-500"
+          className="w-24"
         />
-        <input
+        <Input
           name="unitPrice"
           type="number"
           step="1"
@@ -92,17 +94,17 @@ export function ItemForm({
           value={unitPrice}
           onChange={(e) => setUnitPrice(e.target.value)}
           required
-          className="flex-1 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-neutral-500"
+          className="flex-1"
         />
-        <button
-          type="submit"
-          disabled={isExecuting}
-          className="rounded-lg bg-neutral-800 px-4 py-2 text-sm text-white disabled:opacity-50"
-        >
+        <Button type="submit" variant="secondary" disabled={isExecuting}>
           {isExecuting ? "..." : "Tambah"}
-        </button>
+        </Button>
       </div>
-      {errorMessage && <p className="text-sm text-red-400">{errorMessage}</p>}
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
     </form>
   );
 }

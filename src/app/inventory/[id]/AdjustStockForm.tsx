@@ -3,6 +3,9 @@
 import { useAction } from "next-safe-action/hooks";
 import { adjustStock } from "../actions";
 import { firstActionError } from "@/lib/action-error";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function AdjustStockForm({ itemId }: { itemId: string }) {
   const { execute, isExecuting, result } = useAction(adjustStock);
@@ -24,31 +27,31 @@ export function AdjustStockForm({ itemId }: { itemId: string }) {
       className="mt-3 space-y-2"
     >
       <div className="flex gap-2">
-        <input
+        <Input
           name="changeQty"
           type="number"
           step="0.01"
           placeholder="+10 atau -2"
           required
-          className="flex-1 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-neutral-500"
+          className="flex-1"
         />
         <select
           name="reason"
           defaultValue="purchase"
-          className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-neutral-500"
+          className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
         >
           <option value="purchase">Pembelian</option>
           <option value="adjustment">Penyesuaian</option>
         </select>
-        <button
-          type="submit"
-          disabled={isExecuting}
-          className="rounded-lg bg-neutral-800 px-4 py-2 text-sm text-white disabled:opacity-50"
-        >
+        <Button type="submit" variant="secondary" disabled={isExecuting}>
           {isExecuting ? "..." : "Terapkan"}
-        </button>
+        </Button>
       </div>
-      {errorMessage && <p className="text-sm text-red-400">{errorMessage}</p>}
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
     </form>
   );
 }

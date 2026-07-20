@@ -1,13 +1,15 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 export function PrintButton() {
   return (
-    <button
+    <Button
       type="button"
       onClick={() => window.print()}
-      className="w-full rounded-lg bg-white py-3 font-medium text-neutral-950 print:hidden"
+      className="w-full print:hidden"
     >
       Cetak struk
-    </button>
+    </Button>
   );
 }

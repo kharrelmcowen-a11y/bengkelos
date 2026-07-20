@@ -3,6 +3,12 @@
 import { useAction } from "next-safe-action/hooks";
 import { createExpense } from "../actions";
 import { firstActionError } from "@/lib/action-error";
+import { PageShell } from "@/components/page-shell";
+import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -13,7 +19,9 @@ export default function NewExpensePage() {
   const errorMessage = firstActionError(result);
 
   return (
-    <main className="min-h-screen bg-neutral-950 p-6 text-white">
+    <PageShell maxWidth="max-w-md">
+      <PageHeader title="Catat pengeluaran" backHref="/expenses" />
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -30,18 +38,15 @@ export default function NewExpensePage() {
             spentAt: String(formData.get("spentAt") ?? ""),
           });
         }}
-        className="mx-auto max-w-md space-y-4"
+        className="space-y-4"
       >
-        <h1 className="text-lg font-semibold">Catat pengeluaran</h1>
-
-        <div>
-          <label className="mb-1 block text-sm text-neutral-400">
-            Kategori
-          </label>
+        <div className="space-y-1.5">
+          <Label htmlFor="category">Kategori</Label>
           <select
+            id="category"
             name="category"
             defaultValue="supplies"
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 outline-none focus:border-neutral-500"
+            className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
           >
             <option value="rent">Sewa</option>
             <option value="utilities">Listrik/air</option>
@@ -51,53 +56,44 @@ export default function NewExpensePage() {
           </select>
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm text-neutral-400">
-            Jumlah
-          </label>
-          <input
+        <div className="space-y-1.5">
+          <Label htmlFor="amount">Jumlah</Label>
+          <Input
+            id="amount"
             name="amount"
             type="number"
             step="1"
             min="1"
             required
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 outline-none focus:border-neutral-500"
           />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm text-neutral-400">
-            Tanggal
-          </label>
-          <input
+        <div className="space-y-1.5">
+          <Label htmlFor="spentAt">Tanggal</Label>
+          <Input
+            id="spentAt"
             name="spentAt"
             type="date"
             defaultValue={today()}
             required
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 outline-none focus:border-neutral-500"
           />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm text-neutral-400">
-            Catatan (opsional)
-          </label>
-          <input
-            name="description"
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 outline-none focus:border-neutral-500"
-          />
+        <div className="space-y-1.5">
+          <Label htmlFor="description">Catatan (opsional)</Label>
+          <Input id="description" name="description" />
         </div>
 
-        {errorMessage && <p className="text-sm text-red-400">{errorMessage}</p>}
+        {errorMessage && (
+          <Alert variant="destructive">
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
 
-        <button
-          type="submit"
-          disabled={isExecuting}
-          className="w-full rounded-lg bg-white py-3 font-medium text-neutral-950 disabled:opacity-50"
-        >
+        <Button type="submit" disabled={isExecuting} className="w-full">
           {isExecuting ? "Menyimpan..." : "Simpan pengeluaran"}
-        </button>
+        </Button>
       </form>
-    </main>
+    </PageShell>
   );
 }
