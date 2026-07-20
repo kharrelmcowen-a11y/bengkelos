@@ -5,7 +5,14 @@ import { logout } from "./actions";
 import { PageShell } from "@/components/page-shell";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Wrench, Package, LineChart, Search } from "lucide-react";
+import {
+  PlusCircle,
+  Wrench,
+  Package,
+  LineChart,
+  Search,
+  CalendarClock,
+} from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -56,6 +63,16 @@ export default async function DashboardPage() {
         >
           <Package className="size-4" />
           Stok barang
+        </Link>
+        <Link
+          href="/appointments"
+          className={buttonVariants({
+            variant: "outline",
+            className: "h-auto w-full justify-start gap-3 py-3",
+          })}
+        >
+          <CalendarClock className="size-4" />
+          Jadwal servis
         </Link>
         <Link
           href="/vehicles"

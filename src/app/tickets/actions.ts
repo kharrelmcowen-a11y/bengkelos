@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authActionClient } from "@/lib/safe-action";
+import { findOrCreateVehicle } from "@/lib/vehicles";
 
 const createTicketSchema = z.object({
   customerName: z.string().trim().min(1, "Nama customer wajib diisi"),
@@ -25,48 +26,11 @@ export const createTicket = authActionClient
     const { session } = ctx;
     const supabase = createAdminClient();
 
-    const { data: existingVehicle } = await supabase
-      .from("vehicles")
-      .select("id, customer_id")
-      .eq("shop_id", session.shopId)
-      .eq("plate_number", parsedInput.plateNumber)
-      .maybeSingle();
-
-    let vehicleId: string;
-    let customerId: string;
-
-    if (existingVehicle) {
-      vehicleId = existingVehicle.id;
-      customerId = existingVehicle.customer_id;
-    } else {
-      const { data: customer, error: customerError } = await supabase
-        .from("customers")
-        .insert({
-          shop_id: session.shopId,
-          name: parsedInput.customerName,
-          phone: parsedInput.customerPhone || null,
-        })
-        .select("id")
-        .single();
-
-      if (customerError || !customer) throw new Error("Gagal simpan customer");
-      customerId = customer.id;
-
-      const { data: vehicle, error: vehicleError } = await supabase
-        .from("vehicles")
-        .insert({
-          shop_id: session.shopId,
-          customer_id: customerId,
-          plate_number: parsedInput.plateNumber,
-          brand: parsedInput.brand || null,
-          model: parsedInput.model || null,
-        })
-        .select("id")
-        .single();
-
-      if (vehicleError || !vehicle) throw new Error("Gagal simpan kendaraan");
-      vehicleId = vehicle.id;
-    }
+    const { vehicleId, customerId } = await findOrCreateVehicle(
+      supabase,
+      session.shopId,
+      parsedInput,
+    );
 
     const { data: ticket, error: ticketError } = await supabase
       .from("service_tickets")

@@ -59,7 +59,7 @@ export default async function TicketDetailPage({
         .order("paid_at", { ascending: true }),
       supabase
         .from("inventory_items")
-        .select("id, name, unit, sell_price, stock_qty")
+        .select("id, name, sku, unit, sell_price, stock_qty")
         .eq("shop_id", session.shopId)
         .order("name", { ascending: true }),
     ]);
