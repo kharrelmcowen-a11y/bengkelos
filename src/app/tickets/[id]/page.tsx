@@ -170,6 +170,15 @@ export default async function TicketDetailPage({
             </button>
           </form>
         )}
+
+        {isCompleted && (
+          <Link
+            href={`/tickets/${ticket.id}/receipt`}
+            className="mt-6 block rounded-lg bg-white py-3 text-center font-medium text-neutral-950"
+          >
+            Lihat struk
+          </Link>
+        )}
       </div>
     </main>
   );
