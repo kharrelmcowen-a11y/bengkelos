@@ -28,7 +28,7 @@ export default async function TicketDetailPage({
   const { data: ticket } = await supabase
     .from("service_tickets")
     .select(
-      "id, status, notes, created_at, customers(name, phone), vehicles(plate_number, brand, model), shops(name)",
+      "id, status, notes, created_at, vehicle_id, customers(name, phone), vehicles(plate_number, brand, model), shops(name)",
     )
     .eq("id", id)
     .eq("shop_id", session.shopId)
@@ -89,6 +89,13 @@ export default async function TicketDetailPage({
           </Badge>
         }
       />
+
+      <Link
+        href={`/vehicles/${ticket.vehicle_id}`}
+        className="mb-6 inline-block text-sm text-muted-foreground hover:text-foreground"
+      >
+        Riwayat servis kendaraan ini
+      </Link>
 
       {ticket.notes && (
         <Card className="mb-6 p-3">
