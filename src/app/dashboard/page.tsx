@@ -32,6 +32,14 @@ export default async function DashboardPage() {
           >
             Stok barang
           </Link>
+          {session.role === "owner" && (
+            <Link
+              href="/finance"
+              className="block rounded-lg border border-neutral-700 px-4 py-3 text-center text-neutral-300 hover:bg-neutral-900"
+            >
+              Laporan keuangan
+            </Link>
+          )}
         </div>
 
         <form action={logout} className="mt-6">
