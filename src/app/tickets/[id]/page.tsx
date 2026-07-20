@@ -11,7 +11,8 @@ import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
-import { Receipt } from "lucide-react";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { Receipt, MessageCircle } from "lucide-react";
 
 export default async function TicketDetailPage({
   params,
@@ -27,7 +28,7 @@ export default async function TicketDetailPage({
   const { data: ticket } = await supabase
     .from("service_tickets")
     .select(
-      "id, status, notes, created_at, customers(name, phone), vehicles(plate_number, brand, model)",
+      "id, status, notes, created_at, customers(name, phone), vehicles(plate_number, brand, model), shops(name)",
     )
     .eq("id", id)
     .eq("shop_id", session.shopId)
@@ -41,6 +42,7 @@ export default async function TicketDetailPage({
   const vehicle = Array.isArray(ticket.vehicles)
     ? ticket.vehicles[0]
     : ticket.vehicles;
+  const shop = Array.isArray(ticket.shops) ? ticket.shops[0] : ticket.shops;
 
   const [{ data: items }, { data: payments }, { data: inventoryItems }] =
     await Promise.all([
@@ -68,6 +70,11 @@ export default async function TicketDetailPage({
   const paid = (payments ?? []).reduce((sum, p) => sum + p.amount, 0);
   const balance = total - paid;
   const isCompleted = ticket.status === "completed";
+
+  const waMessage = `Halo ${customer?.name ?? ""}, kendaraan ${vehicle?.plate_number ?? ""} sudah selesai diservis di ${shop?.name ?? "bengkel kami"}. Total: ${formatIDR(total)}. Terima kasih!`;
+  const waLink = isCompleted
+    ? buildWhatsAppLink(customer?.phone, waMessage)
+    : null;
 
   return (
     <PageShell>
@@ -168,13 +175,33 @@ export default async function TicketDetailPage({
       )}
 
       {isCompleted && (
-        <Link
-          href={`/tickets/${ticket.id}/receipt`}
-          className={buttonVariants({ className: "mt-6 w-full" })}
-        >
-          <Receipt className="size-4" />
-          Lihat struk
-        </Link>
+        <div className="mt-6 space-y-2">
+          <Link
+            href={`/tickets/${ticket.id}/receipt`}
+            className={buttonVariants({ className: "w-full" })}
+          >
+            <Receipt className="size-4" />
+            Lihat struk
+          </Link>
+          {waLink ? (
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({
+                variant: "outline",
+                className: "w-full",
+              })}
+            >
+              <MessageCircle className="size-4" />
+              Kabari customer via WhatsApp
+            </a>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground">
+              No. HP customer belum ada — tidak bisa kirim WA.
+            </p>
+          )}
+        </div>
       )}
     </PageShell>
   );
