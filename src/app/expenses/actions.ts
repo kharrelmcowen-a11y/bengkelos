@@ -1,43 +1,35 @@
 "use server";
 
+import { z } from "zod";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getSession } from "@/lib/session";
+import { ownerActionClient } from "@/lib/safe-action";
 
-type ActionState = { error: string } | null;
+const createExpenseSchema = z.object({
+  category: z.enum(["rent", "utilities", "salary", "supplies", "other"], {
+    error: "Kategori tidak valid",
+  }),
+  description: z.string().trim().optional().default(""),
+  amount: z.coerce.number().positive("Jumlah tidak valid"),
+  spentAt: z.string().min(1, "Tanggal wajib diisi"),
+});
 
-const CATEGORIES = ["rent", "utilities", "salary", "supplies", "other"];
+export const createExpense = ownerActionClient
+  .inputSchema(createExpenseSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { session } = ctx;
+    const supabase = createAdminClient();
 
-export async function createExpense(
-  _prevState: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  const session = await getSession();
-  if (!session) redirect("/login");
-  if (session.role !== "owner") return { error: "Hanya owner yang bisa akses" };
+    const { error } = await supabase.from("expenses").insert({
+      shop_id: session.shopId,
+      staff_id: session.staffId,
+      category: parsedInput.category,
+      description: parsedInput.description || null,
+      amount: parsedInput.amount,
+      spent_at: parsedInput.spentAt,
+    });
 
-  const category = String(formData.get("category") ?? "");
-  const description = String(formData.get("description") ?? "").trim();
-  const amount = Number(formData.get("amount"));
-  const spentAt = String(formData.get("spentAt") ?? "");
+    if (error) throw new Error("Gagal simpan pengeluaran");
 
-  if (!CATEGORIES.includes(category)) return { error: "Kategori tidak valid" };
-  if (!Number.isFinite(amount) || amount <= 0)
-    return { error: "Jumlah tidak valid" };
-  if (!spentAt) return { error: "Tanggal wajib diisi" };
-
-  const supabase = createAdminClient();
-
-  const { error } = await supabase.from("expenses").insert({
-    shop_id: session.shopId,
-    staff_id: session.staffId,
-    category,
-    description: description || null,
-    amount,
-    spent_at: spentAt,
+    redirect("/expenses");
   });
-
-  if (error) return { error: "Gagal simpan pengeluaran" };
-
-  redirect("/expenses");
-}

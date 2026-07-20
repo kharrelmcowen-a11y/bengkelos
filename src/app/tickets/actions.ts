@@ -1,243 +1,230 @@
 "use server";
 
+import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getSession } from "@/lib/session";
+import { authActionClient } from "@/lib/safe-action";
 
-type ActionState = { error: string } | null;
-
-export async function createTicket(
-  _prevState: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  const session = await getSession();
-  if (!session) redirect("/login");
-
-  const customerName = String(formData.get("customerName") ?? "").trim();
-  const customerPhone = String(formData.get("customerPhone") ?? "").trim();
-  const plateNumber = String(formData.get("plateNumber") ?? "")
+const createTicketSchema = z.object({
+  customerName: z.string().trim().min(1, "Nama customer wajib diisi"),
+  customerPhone: z.string().trim().optional().default(""),
+  plateNumber: z
+    .string()
     .trim()
-    .toUpperCase();
-  const brand = String(formData.get("brand") ?? "").trim();
-  const model = String(formData.get("model") ?? "").trim();
-  const notes = String(formData.get("notes") ?? "").trim();
+    .min(1, "Nomor plat wajib diisi")
+    .transform((s) => s.toUpperCase()),
+  brand: z.string().trim().optional().default(""),
+  model: z.string().trim().optional().default(""),
+  notes: z.string().trim().optional().default(""),
+});
 
-  if (!customerName) return { error: "Nama customer wajib diisi" };
-  if (!plateNumber) return { error: "Nomor plat wajib diisi" };
+export const createTicket = authActionClient
+  .inputSchema(createTicketSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { session } = ctx;
+    const supabase = createAdminClient();
 
-  const supabase = createAdminClient();
-
-  const { data: existingVehicle } = await supabase
-    .from("vehicles")
-    .select("id, customer_id")
-    .eq("shop_id", session.shopId)
-    .eq("plate_number", plateNumber)
-    .maybeSingle();
-
-  let vehicleId: string;
-  let customerId: string;
-
-  if (existingVehicle) {
-    vehicleId = existingVehicle.id;
-    customerId = existingVehicle.customer_id;
-  } else {
-    const { data: customer, error: customerError } = await supabase
-      .from("customers")
-      .insert({
-        shop_id: session.shopId,
-        name: customerName,
-        phone: customerPhone || null,
-      })
-      .select("id")
-      .single();
-
-    if (customerError || !customer) return { error: "Gagal simpan customer" };
-    customerId = customer.id;
-
-    const { data: vehicle, error: vehicleError } = await supabase
+    const { data: existingVehicle } = await supabase
       .from("vehicles")
+      .select("id, customer_id")
+      .eq("shop_id", session.shopId)
+      .eq("plate_number", parsedInput.plateNumber)
+      .maybeSingle();
+
+    let vehicleId: string;
+    let customerId: string;
+
+    if (existingVehicle) {
+      vehicleId = existingVehicle.id;
+      customerId = existingVehicle.customer_id;
+    } else {
+      const { data: customer, error: customerError } = await supabase
+        .from("customers")
+        .insert({
+          shop_id: session.shopId,
+          name: parsedInput.customerName,
+          phone: parsedInput.customerPhone || null,
+        })
+        .select("id")
+        .single();
+
+      if (customerError || !customer) throw new Error("Gagal simpan customer");
+      customerId = customer.id;
+
+      const { data: vehicle, error: vehicleError } = await supabase
+        .from("vehicles")
+        .insert({
+          shop_id: session.shopId,
+          customer_id: customerId,
+          plate_number: parsedInput.plateNumber,
+          brand: parsedInput.brand || null,
+          model: parsedInput.model || null,
+        })
+        .select("id")
+        .single();
+
+      if (vehicleError || !vehicle) throw new Error("Gagal simpan kendaraan");
+      vehicleId = vehicle.id;
+    }
+
+    const { data: ticket, error: ticketError } = await supabase
+      .from("service_tickets")
       .insert({
         shop_id: session.shopId,
         customer_id: customerId,
-        plate_number: plateNumber,
-        brand: brand || null,
-        model: model || null,
+        vehicle_id: vehicleId,
+        staff_id: session.staffId,
+        notes: parsedInput.notes || null,
       })
       .select("id")
       .single();
 
-    if (vehicleError || !vehicle) return { error: "Gagal simpan kendaraan" };
-    vehicleId = vehicle.id;
-  }
+    if (ticketError || !ticket) throw new Error("Gagal buat tiket servis");
 
-  const { data: ticket, error: ticketError } = await supabase
-    .from("service_tickets")
-    .insert({
-      shop_id: session.shopId,
-      customer_id: customerId,
-      vehicle_id: vehicleId,
-      staff_id: session.staffId,
-      notes: notes || null,
-    })
-    .select("id")
-    .single();
+    redirect(`/tickets/${ticket.id}`);
+  });
 
-  if (ticketError || !ticket) return { error: "Gagal buat tiket servis" };
+const addTicketItemSchema = z.object({
+  ticketId: z.string().uuid(),
+  inventoryItemId: z.string().trim().optional().default(""),
+  description: z.string().trim().min(1, "Deskripsi item wajib diisi"),
+  quantity: z.coerce.number().positive("Jumlah harus lebih dari 0"),
+  unitPrice: z.coerce.number().min(0, "Harga tidak valid"),
+});
 
-  redirect(`/tickets/${ticket.id}`);
-}
+export const addTicketItem = authActionClient
+  .inputSchema(addTicketItemSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { session } = ctx;
+    const supabase = createAdminClient();
 
-export async function addTicketItem(
-  _prevState: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  const session = await getSession();
-  if (!session) redirect("/login");
-
-  const ticketId = String(formData.get("ticketId") ?? "");
-  const inventoryItemId = String(formData.get("inventoryItemId") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
-  const quantity = Number(formData.get("quantity"));
-  const unitPrice = Number(formData.get("unitPrice"));
-
-  if (!description) return { error: "Deskripsi item wajib diisi" };
-  if (!Number.isFinite(quantity) || quantity <= 0)
-    return { error: "Jumlah harus lebih dari 0" };
-  if (!Number.isFinite(unitPrice) || unitPrice < 0)
-    return { error: "Harga tidak valid" };
-
-  const supabase = createAdminClient();
-
-  const { data: ticket } = await supabase
-    .from("service_tickets")
-    .select("id")
-    .eq("id", ticketId)
-    .eq("shop_id", session.shopId)
-    .maybeSingle();
-
-  if (!ticket) return { error: "Tiket tidak ditemukan" };
-
-  if (inventoryItemId) {
-    const { data: inventoryItem } = await supabase
-      .from("inventory_items")
+    const { data: ticket } = await supabase
+      .from("service_tickets")
       .select("id")
-      .eq("id", inventoryItemId)
+      .eq("id", parsedInput.ticketId)
       .eq("shop_id", session.shopId)
       .maybeSingle();
 
-    if (!inventoryItem) return { error: "Barang stok tidak ditemukan" };
-  }
+    if (!ticket) throw new Error("Tiket tidak ditemukan");
 
-  const { error } = await supabase.from("ticket_items").insert({
-    shop_id: session.shopId,
-    ticket_id: ticketId,
-    inventory_item_id: inventoryItemId || null,
-    description,
-    quantity,
-    unit_price: unitPrice,
+    if (parsedInput.inventoryItemId) {
+      const { data: inventoryItem } = await supabase
+        .from("inventory_items")
+        .select("id")
+        .eq("id", parsedInput.inventoryItemId)
+        .eq("shop_id", session.shopId)
+        .maybeSingle();
+
+      if (!inventoryItem) throw new Error("Barang stok tidak ditemukan");
+    }
+
+    const { error } = await supabase.from("ticket_items").insert({
+      shop_id: session.shopId,
+      ticket_id: parsedInput.ticketId,
+      inventory_item_id: parsedInput.inventoryItemId || null,
+      description: parsedInput.description,
+      quantity: parsedInput.quantity,
+      unit_price: parsedInput.unitPrice,
+    });
+
+    if (error) throw new Error("Gagal tambah item");
+
+    revalidatePath(`/tickets/${parsedInput.ticketId}`);
   });
 
-  if (error) return { error: "Gagal tambah item" };
+const addPaymentSchema = z.object({
+  ticketId: z.string().uuid(),
+  amount: z.coerce.number().positive("Jumlah bayar tidak valid"),
+  method: z.enum(["cash", "transfer", "qris", "card"], {
+    error: "Metode bayar tidak valid",
+  }),
+});
 
-  revalidatePath(`/tickets/${ticketId}`);
-  return null;
-}
+export const addPayment = authActionClient
+  .inputSchema(addPaymentSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { session } = ctx;
+    const supabase = createAdminClient();
 
-export async function addPayment(
-  _prevState: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  const session = await getSession();
-  if (!session) redirect("/login");
+    const { data: ticket } = await supabase
+      .from("service_tickets")
+      .select("id")
+      .eq("id", parsedInput.ticketId)
+      .eq("shop_id", session.shopId)
+      .maybeSingle();
 
-  const ticketId = String(formData.get("ticketId") ?? "");
-  const amount = Number(formData.get("amount"));
-  const method = String(formData.get("method") ?? "");
+    if (!ticket) throw new Error("Tiket tidak ditemukan");
 
-  if (!Number.isFinite(amount) || amount <= 0)
-    return { error: "Jumlah bayar tidak valid" };
-  if (!["cash", "transfer", "qris", "card"].includes(method))
-    return { error: "Metode bayar tidak valid" };
+    const { error } = await supabase.from("payments").insert({
+      shop_id: session.shopId,
+      ticket_id: parsedInput.ticketId,
+      staff_id: session.staffId,
+      amount: parsedInput.amount,
+      method: parsedInput.method,
+    });
 
-  const supabase = createAdminClient();
+    if (error) throw new Error("Gagal simpan pembayaran");
 
-  const { data: ticket } = await supabase
-    .from("service_tickets")
-    .select("id")
-    .eq("id", ticketId)
-    .eq("shop_id", session.shopId)
-    .maybeSingle();
-
-  if (!ticket) return { error: "Tiket tidak ditemukan" };
-
-  const { error } = await supabase.from("payments").insert({
-    shop_id: session.shopId,
-    ticket_id: ticketId,
-    staff_id: session.staffId,
-    amount,
-    method,
+    revalidatePath(`/tickets/${parsedInput.ticketId}`);
   });
 
-  if (error) return { error: "Gagal simpan pembayaran" };
+const completeTicketSchema = z.object({
+  ticketId: z.string().uuid(),
+});
 
-  revalidatePath(`/tickets/${ticketId}`);
-  return null;
-}
+export const completeTicket = authActionClient
+  .inputSchema(completeTicketSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { session } = ctx;
+    const supabase = createAdminClient();
 
-export async function completeTicket(formData: FormData): Promise<void> {
-  const session = await getSession();
-  if (!session) redirect("/login");
+    const { data: ticket } = await supabase
+      .from("service_tickets")
+      .select("id, status")
+      .eq("id", parsedInput.ticketId)
+      .eq("shop_id", session.shopId)
+      .maybeSingle();
 
-  const ticketId = String(formData.get("ticketId") ?? "");
-  const supabase = createAdminClient();
+    if (!ticket || ticket.status === "completed") return;
 
-  const { data: ticket } = await supabase
-    .from("service_tickets")
-    .select("id, status")
-    .eq("id", ticketId)
-    .eq("shop_id", session.shopId)
-    .maybeSingle();
+    const { data: stockedItems } = await supabase
+      .from("ticket_items")
+      .select("inventory_item_id, quantity")
+      .eq("ticket_id", parsedInput.ticketId)
+      .not("inventory_item_id", "is", null);
 
-  if (!ticket || ticket.status === "completed") return;
+    for (const stockedItem of stockedItems ?? []) {
+      const { data: inventoryItem } = await supabase
+        .from("inventory_items")
+        .select("stock_qty")
+        .eq("id", stockedItem.inventory_item_id!)
+        .single();
 
-  const { data: stockedItems } = await supabase
-    .from("ticket_items")
-    .select("inventory_item_id, quantity")
-    .eq("ticket_id", ticketId)
-    .not("inventory_item_id", "is", null);
+      if (!inventoryItem) continue;
 
-  for (const stockedItem of stockedItems ?? []) {
-    const { data: inventoryItem } = await supabase
-      .from("inventory_items")
-      .select("stock_qty")
-      .eq("id", stockedItem.inventory_item_id!)
-      .single();
+      await supabase
+        .from("inventory_items")
+        .update({ stock_qty: inventoryItem.stock_qty - stockedItem.quantity })
+        .eq("id", stockedItem.inventory_item_id!);
 
-    if (!inventoryItem) continue;
+      await supabase.from("stock_movements").insert({
+        shop_id: session.shopId,
+        inventory_item_id: stockedItem.inventory_item_id,
+        staff_id: session.staffId,
+        change_qty: -stockedItem.quantity,
+        reason: "ticket_deduct",
+        reference_id: parsedInput.ticketId,
+      });
+    }
 
     await supabase
-      .from("inventory_items")
-      .update({ stock_qty: inventoryItem.stock_qty - stockedItem.quantity })
-      .eq("id", stockedItem.inventory_item_id!);
+      .from("service_tickets")
+      .update({ status: "completed", completed_at: new Date().toISOString() })
+      .eq("id", parsedInput.ticketId)
+      .eq("shop_id", session.shopId);
 
-    await supabase.from("stock_movements").insert({
-      shop_id: session.shopId,
-      inventory_item_id: stockedItem.inventory_item_id,
-      staff_id: session.staffId,
-      change_qty: -stockedItem.quantity,
-      reason: "ticket_deduct",
-      reference_id: ticketId,
-    });
-  }
-
-  await supabase
-    .from("service_tickets")
-    .update({ status: "completed", completed_at: new Date().toISOString() })
-    .eq("id", ticketId)
-    .eq("shop_id", session.shopId);
-
-  revalidatePath(`/tickets/${ticketId}`);
-  revalidatePath("/tickets");
-  revalidatePath("/inventory");
-}
+    revalidatePath(`/tickets/${parsedInput.ticketId}`);
+    revalidatePath("/tickets");
+    revalidatePath("/inventory");
+  });

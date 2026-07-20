@@ -2,9 +2,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { completeTicket } from "../actions";
 import { ItemForm } from "./ItemForm";
 import { PaymentForm } from "./PaymentForm";
+import { CompleteButton } from "./CompleteButton";
 
 function formatIDR(amount: number): string {
   return new Intl.NumberFormat("id-ID", {
@@ -170,16 +170,7 @@ export default async function TicketDetailPage({
         </section>
 
         {!isCompleted && (
-          <form action={completeTicket} className="mt-6">
-            <input type="hidden" name="ticketId" value={ticket.id} />
-            <button
-              type="submit"
-              disabled={balance > 0}
-              className="w-full rounded-lg bg-white py-3 font-medium text-neutral-950 disabled:opacity-40"
-            >
-              {balance > 0 ? "Lunasi dulu sebelum selesai" : "Selesaikan tiket"}
-            </button>
-          </form>
+          <CompleteButton ticketId={ticket.id} balance={balance} />
         )}
 
         {isCompleted && (

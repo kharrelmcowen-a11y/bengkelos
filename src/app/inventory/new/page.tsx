@@ -1,17 +1,31 @@
 "use client";
 
-import { useActionState } from "react";
+import { useAction } from "next-safe-action/hooks";
 import { createInventoryItem } from "../actions";
+import { firstActionError } from "@/lib/action-error";
 
 export default function NewInventoryItemPage() {
-  const [state, formAction, pending] = useActionState(
-    createInventoryItem,
-    null,
-  );
+  const { execute, isExecuting, result } = useAction(createInventoryItem);
+  const errorMessage = firstActionError(result);
 
   return (
     <main className="min-h-screen bg-neutral-950 p-6 text-white">
-      <form action={formAction} className="mx-auto max-w-md space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+          execute({
+            name: String(formData.get("name") ?? ""),
+            sku: String(formData.get("sku") ?? ""),
+            unit: String(formData.get("unit") ?? "pcs"),
+            costPrice: Number(formData.get("costPrice")),
+            sellPrice: Number(formData.get("sellPrice")),
+            stockQty: Number(formData.get("stockQty")),
+            reorderPoint: Number(formData.get("reorderPoint")),
+          });
+        }}
+        className="mx-auto max-w-md space-y-4"
+      >
         <h1 className="text-lg font-semibold">Barang baru</h1>
 
         <div>
@@ -109,14 +123,14 @@ export default function NewInventoryItemPage() {
           </div>
         </div>
 
-        {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
+        {errorMessage && <p className="text-sm text-red-400">{errorMessage}</p>}
 
         <button
           type="submit"
-          disabled={pending}
+          disabled={isExecuting}
           className="w-full rounded-lg bg-white py-3 font-medium text-neutral-950 disabled:opacity-50"
         >
-          {pending ? "Menyimpan..." : "Simpan barang"}
+          {isExecuting ? "Menyimpan..." : "Simpan barang"}
         </button>
       </form>
     </main>

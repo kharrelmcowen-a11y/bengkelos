@@ -1,18 +1,37 @@
 "use client";
 
-import { useActionState } from "react";
+import { useAction } from "next-safe-action/hooks";
 import { createExpense } from "../actions";
+import { firstActionError } from "@/lib/action-error";
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
 export default function NewExpensePage() {
-  const [state, formAction, pending] = useActionState(createExpense, null);
+  const { execute, isExecuting, result } = useAction(createExpense);
+  const errorMessage = firstActionError(result);
 
   return (
     <main className="min-h-screen bg-neutral-950 p-6 text-white">
-      <form action={formAction} className="mx-auto max-w-md space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+          execute({
+            category: String(formData.get("category")) as
+              | "rent"
+              | "utilities"
+              | "salary"
+              | "supplies"
+              | "other",
+            description: String(formData.get("description") ?? ""),
+            amount: Number(formData.get("amount")),
+            spentAt: String(formData.get("spentAt") ?? ""),
+          });
+        }}
+        className="mx-auto max-w-md space-y-4"
+      >
         <h1 className="text-lg font-semibold">Catat pengeluaran</h1>
 
         <div>
@@ -69,14 +88,14 @@ export default function NewExpensePage() {
           />
         </div>
 
-        {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
+        {errorMessage && <p className="text-sm text-red-400">{errorMessage}</p>}
 
         <button
           type="submit"
-          disabled={pending}
+          disabled={isExecuting}
           className="w-full rounded-lg bg-white py-3 font-medium text-neutral-950 disabled:opacity-50"
         >
-          {pending ? "Menyimpan..." : "Simpan pengeluaran"}
+          {isExecuting ? "Menyimpan..." : "Simpan pengeluaran"}
         </button>
       </form>
     </main>

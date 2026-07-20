@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useActionState } from "react";
+import { useAction } from "next-safe-action/hooks";
 import { addTicketItem } from "../actions";
+import { firstActionError } from "@/lib/action-error";
 
 type InventoryOption = {
   id: string;
@@ -19,7 +20,8 @@ export function ItemForm({
   ticketId: string;
   inventoryItems: InventoryOption[];
 }) {
-  const [state, formAction, pending] = useActionState(addTicketItem, null);
+  const { execute, isExecuting, result } = useAction(addTicketItem);
+  const errorMessage = firstActionError(result);
   const [inventoryItemId, setInventoryItemId] = useState("");
   const [description, setDescription] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
@@ -34,10 +36,20 @@ export function ItemForm({
   }
 
   return (
-    <form action={formAction} className="mt-3 space-y-2">
-      <input type="hidden" name="ticketId" value={ticketId} />
-      <input type="hidden" name="inventoryItemId" value={inventoryItemId} />
-
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        execute({
+          ticketId,
+          inventoryItemId,
+          description,
+          quantity: Number(formData.get("quantity")),
+          unitPrice: Number(unitPrice),
+        });
+      }}
+      className="mt-3 space-y-2"
+    >
       {inventoryItems.length > 0 && (
         <select
           value={inventoryItemId}
@@ -84,13 +96,13 @@ export function ItemForm({
         />
         <button
           type="submit"
-          disabled={pending}
+          disabled={isExecuting}
           className="rounded-lg bg-neutral-800 px-4 py-2 text-sm text-white disabled:opacity-50"
         >
-          {pending ? "..." : "Tambah"}
+          {isExecuting ? "..." : "Tambah"}
         </button>
       </div>
-      {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
+      {errorMessage && <p className="text-sm text-red-400">{errorMessage}</p>}
     </form>
   );
 }

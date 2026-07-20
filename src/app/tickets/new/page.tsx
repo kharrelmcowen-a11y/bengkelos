@@ -1,14 +1,30 @@
 "use client";
 
-import { useActionState } from "react";
+import { useAction } from "next-safe-action/hooks";
 import { createTicket } from "../actions";
+import { firstActionError } from "@/lib/action-error";
 
 export default function NewTicketPage() {
-  const [state, formAction, pending] = useActionState(createTicket, null);
+  const { execute, isExecuting, result } = useAction(createTicket);
+  const errorMessage = firstActionError(result);
 
   return (
     <main className="min-h-screen bg-neutral-950 p-6 text-white">
-      <form action={formAction} className="mx-auto max-w-md space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+          execute({
+            customerName: String(formData.get("customerName") ?? ""),
+            customerPhone: String(formData.get("customerPhone") ?? ""),
+            plateNumber: String(formData.get("plateNumber") ?? ""),
+            brand: String(formData.get("brand") ?? ""),
+            model: String(formData.get("model") ?? ""),
+            notes: String(formData.get("notes") ?? ""),
+          });
+        }}
+        className="mx-auto max-w-md space-y-4"
+      >
         <h1 className="text-lg font-semibold">Tiket servis baru</h1>
 
         <div>
@@ -75,14 +91,14 @@ export default function NewTicketPage() {
           />
         </div>
 
-        {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
+        {errorMessage && <p className="text-sm text-red-400">{errorMessage}</p>}
 
         <button
           type="submit"
-          disabled={pending}
+          disabled={isExecuting}
           className="w-full rounded-lg bg-white py-3 font-medium text-neutral-950 disabled:opacity-50"
         >
-          {pending ? "Menyimpan..." : "Buat tiket"}
+          {isExecuting ? "Menyimpan..." : "Buat tiket"}
         </button>
       </form>
     </main>

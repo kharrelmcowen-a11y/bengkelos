@@ -1,14 +1,30 @@
 "use client";
 
-import { useActionState } from "react";
+import { useAction } from "next-safe-action/hooks";
 import { addPayment } from "../actions";
+import { firstActionError } from "@/lib/action-error";
 
 export function PaymentForm({ ticketId }: { ticketId: string }) {
-  const [state, formAction, pending] = useActionState(addPayment, null);
+  const { execute, isExecuting, result } = useAction(addPayment);
+  const errorMessage = firstActionError(result);
 
   return (
-    <form action={formAction} className="mt-3 space-y-2">
-      <input type="hidden" name="ticketId" value={ticketId} />
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        execute({
+          ticketId,
+          amount: Number(formData.get("amount")),
+          method: String(formData.get("method")) as
+            | "cash"
+            | "transfer"
+            | "qris"
+            | "card",
+        });
+      }}
+      className="mt-3 space-y-2"
+    >
       <div className="flex gap-2">
         <input
           name="amount"
@@ -31,13 +47,13 @@ export function PaymentForm({ ticketId }: { ticketId: string }) {
         </select>
         <button
           type="submit"
-          disabled={pending}
+          disabled={isExecuting}
           className="rounded-lg bg-neutral-800 px-4 py-2 text-sm text-white disabled:opacity-50"
         >
-          {pending ? "..." : "Bayar"}
+          {isExecuting ? "..." : "Bayar"}
         </button>
       </div>
-      {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
+      {errorMessage && <p className="text-sm text-red-400">{errorMessage}</p>}
     </form>
   );
 }
