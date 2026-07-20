@@ -96,6 +96,7 @@ export async function addTicketItem(
   if (!session) redirect("/login");
 
   const ticketId = String(formData.get("ticketId") ?? "");
+  const inventoryItemId = String(formData.get("inventoryItemId") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const quantity = Number(formData.get("quantity"));
   const unitPrice = Number(formData.get("unitPrice"));
@@ -117,9 +118,21 @@ export async function addTicketItem(
 
   if (!ticket) return { error: "Tiket tidak ditemukan" };
 
+  if (inventoryItemId) {
+    const { data: inventoryItem } = await supabase
+      .from("inventory_items")
+      .select("id")
+      .eq("id", inventoryItemId)
+      .eq("shop_id", session.shopId)
+      .maybeSingle();
+
+    if (!inventoryItem) return { error: "Barang stok tidak ditemukan" };
+  }
+
   const { error } = await supabase.from("ticket_items").insert({
     shop_id: session.shopId,
     ticket_id: ticketId,
+    inventory_item_id: inventoryItemId || null,
     description,
     quantity,
     unit_price: unitPrice,
@@ -179,6 +192,45 @@ export async function completeTicket(formData: FormData): Promise<void> {
   const ticketId = String(formData.get("ticketId") ?? "");
   const supabase = createAdminClient();
 
+  const { data: ticket } = await supabase
+    .from("service_tickets")
+    .select("id, status")
+    .eq("id", ticketId)
+    .eq("shop_id", session.shopId)
+    .maybeSingle();
+
+  if (!ticket || ticket.status === "completed") return;
+
+  const { data: stockedItems } = await supabase
+    .from("ticket_items")
+    .select("inventory_item_id, quantity")
+    .eq("ticket_id", ticketId)
+    .not("inventory_item_id", "is", null);
+
+  for (const stockedItem of stockedItems ?? []) {
+    const { data: inventoryItem } = await supabase
+      .from("inventory_items")
+      .select("stock_qty")
+      .eq("id", stockedItem.inventory_item_id!)
+      .single();
+
+    if (!inventoryItem) continue;
+
+    await supabase
+      .from("inventory_items")
+      .update({ stock_qty: inventoryItem.stock_qty - stockedItem.quantity })
+      .eq("id", stockedItem.inventory_item_id!);
+
+    await supabase.from("stock_movements").insert({
+      shop_id: session.shopId,
+      inventory_item_id: stockedItem.inventory_item_id,
+      staff_id: session.staffId,
+      change_qty: -stockedItem.quantity,
+      reason: "ticket_deduct",
+      reference_id: ticketId,
+    });
+  }
+
   await supabase
     .from("service_tickets")
     .update({ status: "completed", completed_at: new Date().toISOString() })
@@ -187,4 +239,5 @@ export async function completeTicket(formData: FormData): Promise<void> {
 
   revalidatePath(`/tickets/${ticketId}`);
   revalidatePath("/tickets");
+  revalidatePath("/inventory");
 }

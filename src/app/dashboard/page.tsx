@@ -26,6 +26,12 @@ export default async function DashboardPage() {
           >
             Lihat tiket aktif
           </Link>
+          <Link
+            href="/inventory"
+            className="block rounded-lg border border-neutral-700 px-4 py-3 text-center text-neutral-300 hover:bg-neutral-900"
+          >
+            Stok barang
+          </Link>
         </div>
 
         <form action={logout} className="mt-6">

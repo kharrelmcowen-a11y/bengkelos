@@ -43,18 +43,24 @@ export default async function TicketDetailPage({
     ? ticket.vehicles[0]
     : ticket.vehicles;
 
-  const [{ data: items }, { data: payments }] = await Promise.all([
-    supabase
-      .from("ticket_items")
-      .select("id, description, quantity, unit_price")
-      .eq("ticket_id", id)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("payments")
-      .select("id, amount, method, paid_at")
-      .eq("ticket_id", id)
-      .order("paid_at", { ascending: true }),
-  ]);
+  const [{ data: items }, { data: payments }, { data: inventoryItems }] =
+    await Promise.all([
+      supabase
+        .from("ticket_items")
+        .select("id, description, quantity, unit_price")
+        .eq("ticket_id", id)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("payments")
+        .select("id, amount, method, paid_at")
+        .eq("ticket_id", id)
+        .order("paid_at", { ascending: true }),
+      supabase
+        .from("inventory_items")
+        .select("id, name, unit, sell_price, stock_qty")
+        .eq("shop_id", session.shopId)
+        .order("name", { ascending: true }),
+    ]);
 
   const total = (items ?? []).reduce(
     (sum, item) => sum + item.quantity * item.unit_price,
@@ -116,7 +122,12 @@ export default async function TicketDetailPage({
               ))
             )}
           </div>
-          {!isCompleted && <ItemForm ticketId={ticket.id} />}
+          {!isCompleted && (
+            <ItemForm
+              ticketId={ticket.id}
+              inventoryItems={inventoryItems ?? []}
+            />
+          )}
         </section>
 
         <section className="mt-6">
