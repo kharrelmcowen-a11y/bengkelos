@@ -6,9 +6,10 @@ import { AppointmentActions } from "./AppointmentActions";
 import { formatDate } from "@/lib/format";
 import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
-import { buttonVariants } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { PlusCircle } from "lucide-react";
+import { AnimatedButton } from "@/components/ui/animated-button";
+import { ModernCard } from "@/components/ui/modern-card";
+import { GradientBackground } from "@/components/ui/gradient-bg";
+import { PlusCircle, CalendarClock, Clock, User } from "lucide-react";
 
 export default async function AppointmentsPage() {
   const session = await getSession();
@@ -37,56 +38,75 @@ export default async function AppointmentsPage() {
 
   return (
     <PageShell>
+      <GradientBackground />
       <PageHeader
         title="Jadwal servis"
         backHref="/dashboard"
         backLabel="Dashboard"
         action={
-          <Link
+          <AnimatedButton
             href="/appointments/new"
-            className={buttonVariants({ size: "sm" })}
+            size="sm"
+            className="gradient-border"
           >
             <PlusCircle className="size-4" />
             Jadwal baru
-          </Link>
+          </AnimatedButton>
         }
       />
 
       {groups.size === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Belum ada jadwal servis.
-        </p>
+        <ModernCard className="p-8 text-center">
+          <CalendarClock className="size-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">Belum ada jadwal servis.</p>
+          <AnimatedButton 
+            href="/appointments/new" 
+            className="mt-4"
+          >
+            Buat jadwal pertama
+          </AnimatedButton>
+        </ModernCard>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {Array.from(groups.entries()).map(([day, dayAppointments]) => (
             <section key={day}>
-              <h2 className="text-sm font-medium text-muted-foreground">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <CalendarClock className="size-5 text-primary" />
                 {day}
               </h2>
-              <div className="mt-2 space-y-3">
+              <div className="space-y-4">
                 {dayAppointments.map((appointment) => (
-                  <Card key={appointment.id} className="p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">
-                        {appointment.customer_name}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {new Intl.DateTimeFormat("id-ID", {
-                          timeStyle: "short",
-                        }).format(new Date(appointment.scheduled_at))}
-                      </span>
+                  <ModernCard key={appointment.id} className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <User className="size-5 text-primary" />
+                        </div>
+                        <div>
+                          <span className="font-semibold text-lg">
+                            {appointment.customer_name}
+                          </span>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                            <Clock className="size-4" />
+                            {new Intl.DateTimeFormat("id-ID", {
+                              timeStyle: "short",
+                            }).format(new Date(appointment.scheduled_at))}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {appointment.plate_number} — {appointment.brand}{" "}
-                      {appointment.model}
-                    </p>
+                    <div className="bg-muted/30 rounded-lg p-3 mb-3">
+                      <p className="text-sm">
+                        {appointment.plate_number} — {appointment.brand} {appointment.model}
+                      </p>
+                    </div>
                     {appointment.notes && (
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground mb-3">
                         {appointment.notes}
                       </p>
                     )}
                     <AppointmentActions appointmentId={appointment.id} />
-                  </Card>
+                  </ModernCard>
                 ))}
               </div>
             </section>
