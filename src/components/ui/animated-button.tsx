@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { ReactNode } from "react";
 
 interface AnimatedButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -20,7 +21,7 @@ export function AnimatedButton({
   href,
   ...props
 }: AnimatedButtonProps) {
-  const buttonContent = (
+  const ButtonComponent = (
     <Button
       variant={variant}
       size={size}
@@ -31,29 +32,28 @@ export function AnimatedButton({
     </Button>
   );
 
-  const animatedContent = (
+  if (href) {
+    return (
+      <Link href={href}>
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className="block"
+        >
+          {ButtonComponent}
+        </motion.div>
+      </Link>
+    );
+  }
+
+  return (
     <motion.div
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
-      {buttonContent}
+      {ButtonComponent}
     </motion.div>
   );
-
-  if (href) {
-    return (
-      <motion.a
-        href={href}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        className="block"
-      >
-        {buttonContent}
-      </motion.a>
-    );
-  }
-
-  return animatedContent;
 }
