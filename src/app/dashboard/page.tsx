@@ -7,6 +7,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatIDR } from "@/lib/format";
+import { NotificationBell } from "@/components/notifications";
 import {
   PlusCircle,
   Wrench,
@@ -19,6 +20,7 @@ import {
   AlertTriangle,
   Users,
   Trophy,
+  BarChart3,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -36,11 +38,14 @@ export default async function DashboardPage() {
             {session.role}
           </Badge>
         </div>
-        <form action={logout}>
-          <Button type="submit" variant="ghost" size="sm">
-            Keluar
-          </Button>
-        </form>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <form action={logout}>
+            <Button type="submit" variant="ghost" size="sm">
+              Keluar
+            </Button>
+          </form>
+        </div>
       </div>
 
       {/* Dashboard Metrics */}
@@ -191,6 +196,18 @@ export default async function DashboardPage() {
           <Trophy className="size-4" />
           Pelanggan
         </Link>
+        {session.role === "owner" && (
+          <Link
+            href="/reports"
+            className={buttonVariants({
+              variant: "outline",
+              className: "h-auto w-full justify-start gap-3 py-3",
+            })}
+          >
+            <BarChart3 className="size-4" />
+            Laporan analitik
+          </Link>
+        )}
         {session.role === "owner" && (
           <Link
             href="/finance"
