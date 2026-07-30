@@ -33,27 +33,33 @@ export default async function ReportsPage({
 
       {/* Period Selector */}
       <div className="flex gap-2 mb-6">
-        <Button
-          variant={period === "7d" ? "default" : "outline"}
-          size="sm"
-          asChild
-        >
-          <Link href="/reports?period=7d">7 Hari</Link>
-        </Button>
-        <Button
-          variant={period === "30d" ? "default" : "outline"}
-          size="sm"
-          asChild
-        >
-          <Link href="/reports?period=30d">30 Hari</Link>
-        </Button>
-        <Button
-          variant={period === "90d" ? "default" : "outline"}
-          size="sm"
-          asChild
-        >
-          <Link href="/reports?period=90d">90 Hari</Link>
-        </Button>
+        <Link href="/reports?period=7d">
+          <Button
+            variant={period === "7d" ? "default" : "outline"}
+            size="sm"
+            className="w-full"
+          >
+            7 Hari
+          </Button>
+        </Link>
+        <Link href="/reports?period=30d">
+          <Button
+            variant={period === "30d" ? "default" : "outline"}
+            size="sm"
+            className="w-full"
+          >
+            30 Hari
+          </Button>
+        </Link>
+        <Link href="/reports?period=90d">
+          <Button
+            variant={period === "90d" ? "default" : "outline"}
+            size="sm"
+            className="w-full"
+          >
+            90 Hari
+          </Button>
+        </Link>
       </div>
 
       {/* Key Metrics */}
