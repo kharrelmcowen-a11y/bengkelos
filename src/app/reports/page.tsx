@@ -22,6 +22,22 @@ export default async function ReportsPage({
 
   const reportData = await getReportData(period);
 
+  if (!reportData) {
+    return (
+      <PageShell>
+        <PageHeader
+          title="Laporan Analitik"
+          description="Insight mendalam tentang performa bengkel"
+          backHref="/dashboard"
+          backLabel="Dashboard"
+        />
+        <Card className="p-6">
+          <p className="text-center text-muted-foreground">Gagal memuat data laporan</p>
+        </Card>
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell>
       <PageHeader
