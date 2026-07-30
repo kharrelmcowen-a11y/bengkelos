@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authActionClient } from "@/lib/safe-action";
+import { logAction, logActionError } from "@/lib/logger";
 
 const createInventoryItemSchema = z.object({
   name: z.string().trim().min(1, "Nama barang wajib diisi"),
@@ -37,7 +38,13 @@ export const createInventoryItem = authActionClient
       .select("id")
       .single();
 
-    if (error || !item) throw new Error("Gagal simpan barang");
+    if (error || !item) {
+      logActionError('createInventoryItem', error || new Error("Gagal simpan barang"), { 
+        shopId: session.shopId, 
+        name: parsedInput.name 
+      });
+      throw new Error("Gagal simpan barang");
+    }
 
     if (parsedInput.stockQty > 0) {
       await supabase.from("stock_movements").insert({
@@ -49,6 +56,12 @@ export const createInventoryItem = authActionClient
       });
     }
 
+    logAction('createInventoryItem', { 
+      itemId: item.id, 
+      shopId: session.shopId, 
+      name: parsedInput.name, 
+      sku: parsedInput.sku 
+    });
     redirect("/inventory");
   });
 
@@ -85,7 +98,13 @@ export const adjustStock = authActionClient
       .update({ stock_qty: newStock })
       .eq("id", parsedInput.itemId);
 
-    if (updateError) throw new Error("Gagal update stok");
+    if (updateError) {
+      logActionError('adjustStock', updateError, { 
+        shopId: session.shopId, 
+        itemId: parsedInput.itemId 
+      });
+      throw new Error("Gagal update stok");
+    }
 
     await supabase.from("stock_movements").insert({
       shop_id: session.shopId,
@@ -93,6 +112,14 @@ export const adjustStock = authActionClient
       staff_id: session.staffId,
       change_qty: parsedInput.changeQty,
       reason: parsedInput.reason,
+    });
+
+    logAction('adjustStock', { 
+      shopId: session.shopId, 
+      itemId: parsedInput.itemId, 
+      changeQty: parsedInput.changeQty, 
+      reason: parsedInput.reason, 
+      newStock 
     });
 
     revalidatePath(`/inventory/${parsedInput.itemId}`);

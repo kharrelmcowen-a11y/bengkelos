@@ -6,6 +6,7 @@ import { ItemForm } from "./ItemForm";
 import { PaymentForm } from "./PaymentForm";
 import { DeletePaymentButton } from "./DeletePaymentButton";
 import { CompleteButton } from "./CompleteButton";
+import { AttachmentForm } from "./AttachmentForm";
 import { formatIDR } from "@/lib/format";
 import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
@@ -45,7 +46,7 @@ export default async function TicketDetailPage({
     : ticket.vehicles;
   const shop = Array.isArray(ticket.shops) ? ticket.shops[0] : ticket.shops;
 
-  const [{ data: items }, { data: payments }, { data: inventoryItems }] =
+  const [{ data: items }, { data: payments }, { data: inventoryItems }, { data: attachments }] =
     await Promise.all([
       supabase
         .from("ticket_items")
@@ -62,6 +63,11 @@ export default async function TicketDetailPage({
         .select("id, name, sku, unit, sell_price, stock_qty")
         .eq("shop_id", session.shopId)
         .order("name", { ascending: true }),
+      supabase
+        .from("ticket_attachments")
+        .select("id, file_name, file_type, file_url, mime_type, created_at")
+        .eq("ticket_id", id)
+        .order("created_at", { ascending: true }),
     ]);
 
   const total = (items ?? []).reduce(
@@ -167,6 +173,11 @@ export default async function TicketDetailPage({
         </Card>
         {!isCompleted && <PaymentForm ticketId={ticket.id} />}
       </section>
+
+      <AttachmentForm 
+        ticketId={ticket.id} 
+        existingAttachments={attachments ?? []} 
+      />
 
       <Card className="mt-6 space-y-1 p-4 text-sm">
         <div className="flex justify-between">
