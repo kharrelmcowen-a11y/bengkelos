@@ -4,10 +4,11 @@ import { getSession } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
-import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { PlusCircle } from "lucide-react";
+import { AnimatedButton } from "@/components/ui/animated-button";
+import { ModernCard } from "@/components/ui/modern-card";
+import { GradientBackground } from "@/components/ui/gradient-bg";
+import { PlusCircle, Wrench, Clock, CheckCircle } from "lucide-react";
 
 export default async function TicketsPage() {
   const session = await getSession();
@@ -25,26 +26,35 @@ export default async function TicketsPage() {
 
   return (
     <PageShell>
+      <GradientBackground />
       <PageHeader
         title="Tiket servis aktif"
         backHref="/dashboard"
         backLabel="Dashboard"
         action={
-          <Link
+          <AnimatedButton
             href="/tickets/new"
-            className={buttonVariants({ size: "sm" })}
+            size="sm"
+            className="gradient-border"
           >
             <PlusCircle className="size-4" />
             Tiket baru
-          </Link>
+          </AnimatedButton>
         }
       />
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {!tickets || tickets.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Belum ada tiket aktif.
-          </p>
+          <ModernCard className="p-8 text-center">
+            <Wrench className="size-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">Belum ada tiket aktif.</p>
+            <AnimatedButton 
+              href="/tickets/new" 
+              className="mt-4"
+            >
+              Buat tiket pertama
+            </AnimatedButton>
+          </ModernCard>
         ) : (
           tickets.map((ticket) => {
             const customer = Array.isArray(ticket.customers)
@@ -54,20 +64,35 @@ export default async function TicketsPage() {
               ? ticket.vehicles[0]
               : ticket.vehicles;
 
+            const statusIcon = ticket.status === "open" ? (
+              <Clock className="size-4 text-yellow-500" />
+            ) : (
+              <Wrench className="size-4 text-blue-500" />
+            );
+
             return (
               <Link key={ticket.id} href={`/tickets/${ticket.id}`}>
-                <Card className="p-4 transition-colors hover:bg-muted/50">
+                <ModernCard className="p-5">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{customer?.name}</span>
-                    <Badge variant="secondary" className="capitalize">
-                      {ticket.status}
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        {statusIcon}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-lg">{customer?.name}</span>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {vehicle?.plate_number} — {vehicle?.brand} {vehicle?.model}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge 
+                      variant={ticket.status === "open" ? "secondary" : "default"}
+                      className="capitalize"
+                    >
+                      {ticket.status === "open" ? "Menunggu" : "Sedang dikerjakan"}
                     </Badge>
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {vehicle?.plate_number} — {vehicle?.brand}{" "}
-                    {vehicle?.model}
-                  </p>
-                </Card>
+                </ModernCard>
               </Link>
             );
           })

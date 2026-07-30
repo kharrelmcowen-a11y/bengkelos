@@ -4,12 +4,13 @@ import { getSession } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
-import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, ScanLine } from "lucide-react";
+import { AnimatedButton } from "@/components/ui/animated-button";
+import { ModernCard } from "@/components/ui/modern-card";
+import { GradientBackground } from "@/components/ui/gradient-bg";
+import { Input } from "@/components/ui/input";
+import { PlusCircle, ScanLine, Package, AlertTriangle } from "lucide-react";
 
 export default async function InventoryPage({
   searchParams,
@@ -35,56 +36,83 @@ export default async function InventoryPage({
 
   return (
     <PageShell>
+      <GradientBackground />
       <PageHeader
         title="Stok barang"
         backHref="/dashboard"
         backLabel="Dashboard"
         action={
-          <Link
+          <AnimatedButton
             href="/inventory/new"
-            className={buttonVariants({ size: "sm" })}
+            size="sm"
+            className="gradient-border"
           >
             <PlusCircle className="size-4" />
             Barang baru
-          </Link>
+          </AnimatedButton>
         }
       />
 
-      <form method="GET" className="mb-4 flex gap-2">
-        <Input
-          name="q"
-          defaultValue={q ?? ""}
-          placeholder="Scan barcode SKU atau cari nama barang"
-          className="flex-1"
-        />
-        <Button type="submit">
+      <form method="GET" className="mb-6 flex gap-2">
+        <div className="relative flex-1">
+          <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            name="q"
+            defaultValue={q ?? ""}
+            placeholder="Scan barcode SKU atau cari nama barang"
+            className="flex-1 pl-10"
+          />
+        </div>
+        <Button type="submit" className="glow-hover">
           <ScanLine className="size-4" />
           Cari
         </Button>
       </form>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {!items || items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {q ? "Tidak ada barang yang cocok." : "Belum ada barang."}
-          </p>
+          <ModernCard className="p-8 text-center">
+            <Package className="size-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">
+              {q ? "Tidak ada barang yang cocok." : "Belum ada barang."}
+            </p>
+            <AnimatedButton 
+              href="/inventory/new" 
+              className="mt-4"
+            >
+              Tambah barang pertama
+            </AnimatedButton>
+          </ModernCard>
         ) : (
           items.map((item) => {
             const isLow = item.stock_qty <= item.reorder_point;
             return (
               <Link key={item.id} href={`/inventory/${item.id}`}>
-                <Card className="p-4 transition-colors hover:bg-muted/50">
+                <ModernCard className="p-5">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{item.name}</span>
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${isLow ? 'bg-destructive/10' : 'bg-primary/10'}`}>
+                        {isLow ? (
+                          <AlertTriangle className="size-5 text-destructive" />
+                        ) : (
+                          <Package className="size-5 text-primary" />
+                        )}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-lg">{item.name}</span>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {item.sku ? `${item.sku} — ` : ""}
+                          {item.stock_qty} {item.unit} tersisa
+                        </p>
+                      </div>
+                    </div>
                     {isLow && (
-                      <Badge variant="destructive">Stok rendah</Badge>
+                      <Badge variant="destructive" className="ml-2">
+                        Stok rendah
+                      </Badge>
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {item.sku ? `${item.sku} — ` : ""}
-                    {item.stock_qty} {item.unit} tersisa
-                  </p>
-                </Card>
+                </ModernCard>
               </Link>
             );
           })

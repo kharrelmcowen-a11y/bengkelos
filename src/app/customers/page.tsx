@@ -5,11 +5,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { formatIDR, formatDate } from "@/lib/format";
 import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AnimatedButton } from "@/components/ui/animated-button";
+import { ModernCard } from "@/components/ui/modern-card";
+import { GradientBackground } from "@/components/ui/gradient-bg";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Trophy, TrendingUp } from "lucide-react";
+import { Search, Trophy, TrendingUp, Users, Crown } from "lucide-react";
 
 export default async function CustomersPage({
   searchParams,
@@ -36,6 +38,7 @@ export default async function CustomersPage({
 
   return (
     <PageShell>
+      <GradientBackground />
       <PageHeader
         title="Pelanggan"
         description="Riwayat dan loyalitas pelanggan"
@@ -43,61 +46,77 @@ export default async function CustomersPage({
         backLabel="Dashboard"
       />
 
-      <form method="GET" className="flex gap-2">
-        <Input
-          name="q"
-          defaultValue={q ?? ""}
-          placeholder="Cari nama atau no. HP"
-          className="flex-1"
-        />
-        <Button type="submit">
+      <form method="GET" className="flex gap-2 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            name="q"
+            defaultValue={q ?? ""}
+            placeholder="Cari nama atau no. HP"
+            className="flex-1 pl-10"
+          />
+        </div>
+        <Button type="submit" className="glow-hover">
           <Search className="size-4" />
           Cari
         </Button>
       </form>
 
-      <div className="mt-6 space-y-3">
+      <div className="space-y-4">
         {!customers || customers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {q ? "Tidak ada pelanggan yang cocok." : "Belum ada pelanggan."}
-          </p>
+          <ModernCard className="p-8 text-center">
+            <Users className="size-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">
+              {q ? "Tidak ada pelanggan yang cocok." : "Belum ada pelanggan."}
+            </p>
+          </ModernCard>
         ) : (
-          customers.map((customer) => (
-            <Link key={customer.id} href={`/customers/${customer.id}`}>
-              <Card className="p-4 transition-colors hover:bg-muted/50">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{customer.name}</span>
-                      {customer.loyalty_points > 0 && (
-                        <Badge variant="secondary" className="gap-1">
-                          <Trophy className="size-3" />
-                          {customer.loyalty_points} poin
-                        </Badge>
+          customers.map((customer, index) => {
+            const isTopCustomer = index === 0;
+            return (
+              <Link key={customer.id} href={`/customers/${customer.id}`}>
+                <ModernCard 
+                  className="p-5"
+                  gradient={isTopCustomer}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-lg">{customer.name}</span>
+                        {customer.loyalty_points > 0 && (
+                          <Badge 
+                            variant="secondary" 
+                            className="gap-1 bg-gradient-to-r from-primary/20 to-accent/20 border-primary/30"
+                          >
+                            {isTopCustomer && <Crown className="size-3" />}
+                            <Trophy className="size-3" />
+                            {customer.loyalty_points} poin
+                          </Badge>
+                        )}
+                      </div>
+                      {customer.phone && (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {customer.phone}
+                        </p>
                       )}
                     </div>
-                    {customer.phone && (
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {customer.phone}
+                    <div className="text-right">
+                      <p className="font-bold text-lg gradient-text">{formatIDR(customer.total_spent)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {customer.total_visits} kunjungan
                       </p>
-                    )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{formatIDR(customer.total_spent)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {customer.total_visits} kunjungan
-                    </p>
-                  </div>
-                </div>
-                {customer.last_visit && (
-                  <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                    <TrendingUp className="size-3" />
-                    Kunjungan terakhir: {formatDate(customer.last_visit)}
-                  </div>
-                )}
-              </Card>
-            </Link>
-          ))
+                  {customer.last_visit && (
+                    <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                      <TrendingUp className="size-4" />
+                      Kunjungan terakhir: {formatDate(customer.last_visit)}
+                    </div>
+                  )}
+                </ModernCard>
+              </Link>
+            );
+          })
         )}
       </div>
     </PageShell>
