@@ -1,19 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Ticket Flow', () => {
-  test.beforeEach(async ({ page }) => {
-    // Load authenticated state
-    await page.context().addInitScript(() => {
-      // This would be set by the auth setup, but for now we'll do manual login
-    });
-  });
-
-  test('complete ticket flow: login → create ticket → add items → add payment → complete → receipt', async ({ page }) => {
-    // Login
-    await page.goto('/login');
-    await page.fill('input[name="pin"]', '1234');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/dashboard');
+  test('complete ticket flow: create ticket → add items → add payment → complete → receipt', async ({ page }) => {
+    // Start at dashboard (already authenticated via setup)
+    await page.goto('/dashboard');
     
     // Create new ticket
     await page.click('a[href="/tickets/new"]');
@@ -74,10 +64,7 @@ test.describe('Ticket Flow', () => {
     // This test would require setting up inventory items first
     // For now, it's a placeholder for the inventory flow test
     
-    await page.goto('/login');
-    await page.fill('input[name="pin"]', '1234');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/dashboard');
+    await page.goto('/dashboard');
     
     // Navigate to inventory
     await page.click('a[href="/inventory"]');
@@ -88,10 +75,7 @@ test.describe('Ticket Flow', () => {
   });
 
   test('appointment to ticket conversion', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('input[name="pin"]', '1234');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/dashboard');
+    await page.goto('/dashboard');
     
     // Create appointment
     await page.click('a[href="/appointments/new"]');
@@ -126,10 +110,7 @@ test.describe('Ticket Flow', () => {
     // This test would require creating test users with different roles
     // For now, it's a placeholder for RBAC testing
     
-    await page.goto('/login');
-    await page.fill('input[name="pin"]', '1234');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/dashboard');
+    await page.goto('/dashboard');
     
     // Try to access finance page (should work for owner, redirect for others)
     await page.goto('/finance');
@@ -143,5 +124,77 @@ test.describe('Ticket Flow', () => {
       console.log('User is owner - can access finance page');
       await expect(page.locator('text=Laporan keuangan')).toBeVisible();
     }
+  });
+
+  test('customer loyalty points accrual after ticket completion', async ({ page }) => {
+    await page.goto('/dashboard');
+    
+    // Create a ticket with a customer
+    await page.click('a[href="/tickets/new"]');
+    await page.waitForURL('/tickets/new');
+    
+    await page.fill('input[name="customerName"]', 'Loyalty Test Customer');
+    await page.fill('input[name="customerPhone"]', '08123456789');
+    await page.fill('input[name="plateNumber"]', 'B9999ZZZ');
+    await page.fill('input[name="brand"]', 'Test Brand');
+    await page.fill('input[name="model"]', 'Test Model');
+    
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/tickets\/[a-f0-9-]+$/);
+    
+    // Add a high-value item to generate loyalty points
+    await page.fill('input[name="description"]', 'Service Lengkap');
+    await page.fill('input[name="quantity"]', '1');
+    await page.fill('input[name="unitPrice"]', '50000'); // Should generate 50 points
+    await page.click('button:has-text("Tambah")');
+    
+    await page.waitForSelector('text=Service Lengkap');
+    
+    // Add payment
+    await page.fill('input[name="amount"]', '50000');
+    await page.selectOption('select[name="method"]', 'cash');
+    await page.click('button:has-text("Bayar")');
+    
+    await page.waitForSelector('text=Tunai');
+    
+    // Complete ticket
+    await page.click('button:has-text("Selesaikan tiket")');
+    await page.waitForSelector('a:has-text("Lihat struk")');
+    
+    // Navigate to customers page to check loyalty points
+    await page.goto('/customers');
+    
+    // Search for the test customer
+    await page.fill('input[name="q"]', 'Loyalty Test Customer');
+    await page.click('button:has-text("Cari")');
+    
+    // Verify loyalty points are displayed
+    await expect(page.locator('text=Loyalty Test Customer')).toBeVisible();
+    await expect(page.locator('text=50 poin')).toBeVisible();
+  });
+
+  test('ticket attachment upload and display', async ({ page }) => {
+    await page.goto('/dashboard');
+    
+    // Create a ticket
+    await page.click('a[href="/tickets/new"]');
+    await page.waitForURL('/tickets/new');
+    
+    await page.fill('input[name="customerName"]', 'Attachment Test Customer');
+    await page.fill('input[name="customerPhone"]', '08123456789');
+    await page.fill('input[name="plateNumber"]', 'B8888YYY');
+    await page.fill('input[name="brand"]', 'Test Brand');
+    await page.fill('input[name="model"]', 'Test Model');
+    
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/tickets\/[a-f0-9-]+$/);
+    
+    // Note: File upload testing in Playwright requires actual file handling
+    // This is a placeholder to verify the attachment form is present
+    await expect(page.locator('text=Lampiran Foto/Dokumen')).toBeVisible();
+    await expect(page.locator('input[type="file"]')).toBeVisible();
+    
+    // Verify file type selector exists
+    await expect(page.locator('select')).toBeVisible();
   });
 });

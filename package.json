@@ -10,7 +10,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
-    "sentry-wizard": "sentry-wizard -i nextjs"
+    "sentry-wizard": "sentry-wizard -i nextjs",
+    "setup:storage": "tsx scripts/setup-storage-bucket.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -38,6 +39,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
+    "tsx": "^4.23.1",
     "typescript": "^5"
   }
 }
