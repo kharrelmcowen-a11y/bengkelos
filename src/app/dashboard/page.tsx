@@ -1,13 +1,15 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { logout, getDashboardMetrics } from "./actions";
 import { PageShell } from "@/components/page-shell";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatIDR } from "@/lib/format";
 import { NotificationBell } from "@/components/notifications";
+import { AnimatedButton } from "@/components/ui/animated-button";
+import { ModernCard } from "@/components/ui/modern-card";
+import { GradientBackground } from "@/components/ui/gradient-bg";
 import {
   PlusCircle,
   Wrench,
@@ -21,6 +23,7 @@ import {
   Users,
   Trophy,
   BarChart3,
+  Sparkles,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -30,18 +33,19 @@ export default async function DashboardPage() {
   const metrics = await getDashboardMetrics();
 
   return (
-    <PageShell maxWidth="max-w-md">
+    <PageShell>
+      <GradientBackground />
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold">Halo, {session.name}</h1>
-          <Badge variant="secondary" className="mt-1 capitalize">
+          <h1 className="text-2xl font-bold gradient-text">Halo, {session.name}</h1>
+          <Badge variant="secondary" className="mt-2 capitalize">
             {session.role}
           </Badge>
         </div>
         <div className="flex items-center gap-2">
           <NotificationBell />
           <form action={logout}>
-            <Button type="submit" variant="ghost" size="sm">
+            <Button type="submit" variant="ghost" size="sm" className="glow-hover">
               Keluar
             </Button>
           </form>
@@ -50,175 +54,174 @@ export default async function DashboardPage() {
 
       {/* Dashboard Metrics */}
       {metrics && (
-        <div className="mt-6 space-y-4">
+        <div className="mt-8 space-y-6">
           {/* Revenue Card */}
-          <Card className="p-4">
+          <ModernCard gradient className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Pendapatan hari ini</p>
-                <p className="text-2xl font-semibold">{formatIDR(metrics.todayRevenue)}</p>
+                <p className="text-3xl font-bold gradient-text">{formatIDR(metrics.todayRevenue)}</p>
               </div>
-              <div className="flex items-center gap-1 text-sm">
+              <div className="flex items-center gap-2 bg-background/50 backdrop-blur-sm px-3 py-1 rounded-full">
                 {metrics.revenueChange >= 0 ? (
-                  <TrendingUp className="size-4 text-green-500" />
+                  <TrendingUp className="size-5 text-green-500" />
                 ) : (
-                  <TrendingDown className="size-4 text-red-500" />
+                  <TrendingDown className="size-5 text-red-500" />
                 )}
-                <span className={metrics.revenueChange >= 0 ? "text-green-500" : "text-red-500"}>
+                <span className={`font-semibold ${metrics.revenueChange >= 0 ? "text-green-500" : "text-red-500"}`}>
                   {Math.abs(metrics.revenueChange).toFixed(0)}%
                 </span>
               </div>
             </div>
-          </Card>
+          </ModernCard>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 gap-3">
-            <Card className="p-3">
-              <div className="flex items-center gap-2">
-                <Wrench className="size-4 text-muted-foreground" />
+          <div className="grid grid-cols-2 gap-4">
+            <ModernCard className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Wrench className="size-5 text-primary" />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Tiket hari ini</p>
-                  <p className="text-lg font-semibold">{metrics.todayTickets}</p>
+                  <p className="text-xl font-bold">{metrics.todayTickets}</p>
                 </div>
               </div>
-            </Card>
-            <Card className="p-3">
-              <div className="flex items-center gap-2">
-                <Users className="size-4 text-muted-foreground" />
+            </ModernCard>
+            <ModernCard className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-accent/10 rounded-lg">
+                  <Users className="size-5 text-accent" />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Tiket aktif</p>
-                  <p className="text-lg font-semibold">{metrics.activeTickets}</p>
+                  <p className="text-xl font-bold">{metrics.activeTickets}</p>
                 </div>
               </div>
-            </Card>
+            </ModernCard>
           </div>
 
           {/* Low Stock Alert */}
           {metrics.lowStockItems.length > 0 && (
-            <Card className="p-3 border-destructive/50 bg-destructive/5">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="size-4 text-destructive" />
-                <p className="text-sm font-medium text-destructive">Stok rendah</p>
+            <ModernCard className="p-4 border-destructive/50 bg-destructive/5 glow">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="size-5 text-destructive" />
+                <p className="font-semibold text-destructive">Stok rendah</p>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {metrics.lowStockItems.slice(0, 3).map((item) => (
-                  <div key={item.id} className="flex justify-between text-xs">
+                  <div key={item.id} className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">{item.name}</span>
-                    <span className="font-medium">{item.stock_qty} {item.reorder_point > 0 && `(${item.reorder_point})`}</span>
+                    <Badge variant="destructive" className="text-xs">
+                      {item.stock_qty} {item.reorder_point > 0 && `(min: ${item.reorder_point})`}
+                    </Badge>
                   </div>
                 ))}
               </div>
-            </Card>
+            </ModernCard>
           )}
 
           {/* Today's Appointments */}
           {metrics.todayAppointments.length > 0 && (
-            <Card className="p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <CalendarClock className="size-4 text-muted-foreground" />
-                <p className="text-sm font-medium">Jadwal hari ini</p>
+            <ModernCard className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <CalendarClock className="size-5 text-primary" />
+                <p className="font-semibold">Jadwal hari ini</p>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {metrics.todayAppointments.slice(0, 3).map((apt) => (
-                  <div key={apt.id} className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">{apt.customer_name}</span>
-                    <span className="font-medium">
+                  <div key={apt.id} className="flex justify-between items-center text-sm p-2 bg-muted/30 rounded-lg">
+                    <span className="font-medium">{apt.customer_name}</span>
+                    <Badge variant="outline" className="text-xs">
                       {new Intl.DateTimeFormat("id-ID", {
                         hour: "2-digit",
                         minute: "2-digit",
                       }).format(new Date(apt.scheduled_at))}
-                    </span>
+                    </Badge>
                   </div>
                 ))}
               </div>
-            </Card>
+            </ModernCard>
           )}
         </div>
       )}
 
-      <div className="mt-6 space-y-3">
-        <Link
+      <div className="mt-8 space-y-3">
+        <AnimatedButton 
           href="/tickets/new"
-          className={buttonVariants({
-            className: "h-auto w-full justify-start gap-3 py-3",
-          })}
+          className="w-full justify-start gap-3 py-4 h-auto text-base gradient-border"
         >
-          <PlusCircle className="size-4" />
+          <PlusCircle className="size-5" />
           Tiket servis baru
-        </Link>
-        <Link
+          <Sparkles className="size-4 ml-auto" />
+        </AnimatedButton>
+        
+        <AnimatedButton 
           href="/tickets"
-          className={buttonVariants({
-            variant: "outline",
-            className: "h-auto w-full justify-start gap-3 py-3",
-          })}
+          variant="outline"
+          className="w-full justify-start gap-3 py-4 h-auto text-base"
         >
-          <Wrench className="size-4" />
+          <Wrench className="size-5" />
           Lihat tiket aktif
-        </Link>
-        <Link
+        </AnimatedButton>
+        
+        <AnimatedButton 
           href="/inventory"
-          className={buttonVariants({
-            variant: "outline",
-            className: "h-auto w-full justify-start gap-3 py-3",
-          })}
+          variant="outline"
+          className="w-full justify-start gap-3 py-4 h-auto text-base"
         >
-          <Package className="size-4" />
+          <Package className="size-5" />
           Stok barang
-        </Link>
-        <Link
+        </AnimatedButton>
+        
+        <AnimatedButton 
           href="/appointments"
-          className={buttonVariants({
-            variant: "outline",
-            className: "h-auto w-full justify-start gap-3 py-3",
-          })}
+          variant="outline"
+          className="w-full justify-start gap-3 py-4 h-auto text-base"
         >
-          <CalendarClock className="size-4" />
+          <CalendarClock className="size-5" />
           Jadwal servis
-        </Link>
-        <Link
+        </AnimatedButton>
+        
+        <AnimatedButton 
           href="/vehicles"
-          className={buttonVariants({
-            variant: "outline",
-            className: "h-auto w-full justify-start gap-3 py-3",
-          })}
+          variant="outline"
+          className="w-full justify-start gap-3 py-4 h-auto text-base"
         >
-          <Search className="size-4" />
+          <Search className="size-5" />
           Cari kendaraan
-        </Link>
-        <Link
+        </AnimatedButton>
+        
+        <AnimatedButton 
           href="/customers"
-          className={buttonVariants({
-            variant: "outline",
-            className: "h-auto w-full justify-start gap-3 py-3",
-          })}
+          variant="outline"
+          className="w-full justify-start gap-3 py-4 h-auto text-base"
         >
-          <Trophy className="size-4" />
+          <Trophy className="size-5" />
           Pelanggan
-        </Link>
+        </AnimatedButton>
+        
         {session.role === "owner" && (
-          <Link
+          <AnimatedButton 
             href="/reports"
-            className={buttonVariants({
-              variant: "outline",
-              className: "h-auto w-full justify-start gap-3 py-3",
-            })}
+            variant="outline"
+            className="w-full justify-start gap-3 py-4 h-auto text-base gradient-border"
           >
-            <BarChart3 className="size-4" />
+            <BarChart3 className="size-5" />
             Laporan analitik
-          </Link>
+            <Sparkles className="size-4 ml-auto" />
+          </AnimatedButton>
         )}
+        
         {session.role === "owner" && (
-          <Link
+          <AnimatedButton 
             href="/finance"
-            className={buttonVariants({
-              variant: "outline",
-              className: "h-auto w-full justify-start gap-3 py-3",
-            })}
+            variant="outline"
+            className="w-full justify-start gap-3 py-4 h-auto text-base"
           >
-            <LineChart className="size-4" />
+            <LineChart className="size-5" />
             Laporan keuangan
-          </Link>
+          </AnimatedButton>
         )}
       </div>
     </PageShell>
