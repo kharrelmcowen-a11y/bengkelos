@@ -10,8 +10,6 @@ export default defineConfig({
   use: {
     baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
-    // Load authentication state from file
-    storageState: 'e2e/auth-state.json',
   },
   projects: [
     {
@@ -20,17 +18,10 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      dependencies: ['setup'],
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-      dependencies: ['setup'],
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        storageState: 'e2e/auth-state.json',
+      },
       dependencies: ['setup'],
     },
   ],

@@ -6,6 +6,33 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+
+// Load environment variables from .env.local
+function loadEnvFile(filePath: string) {
+  try {
+    const content = readFileSync(filePath, 'utf-8');
+    const lines = content.split('\n');
+    
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (trimmedLine && !trimmedLine.startsWith('#') && trimmedLine.includes('=')) {
+        const [key, ...valueParts] = trimmedLine.split('=');
+        const value = valueParts.join('=').trim();
+        // Remove quotes if present
+        const cleanValue = value.replace(/^["']|["']$/g, '');
+        process.env[key.trim()] = cleanValue;
+      }
+    }
+  } catch (error) {
+    console.log(`Could not load ${filePath}, using system environment variables`);
+  }
+}
+
+// Try to load .env.local from the project root
+const envPath = resolve(process.cwd(), '.env.local');
+loadEnvFile(envPath);
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -14,6 +41,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Missing required environment variables:');
   console.error('- NEXT_PUBLIC_SUPABASE_URL');
   console.error('- SUPABASE_SERVICE_ROLE_KEY');
+  console.error('\nMake sure .env.local exists in the project root with these variables set.');
   process.exit(1);
 }
 
