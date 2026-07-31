@@ -22,7 +22,8 @@ export const loginWithPin = actionClient
       .eq("active", true);
 
     if (error || !data || data.length !== 1) {
-      logActionError('login', new Error("PIN salah"), { pin: parsedInput.pin });
+      // Never log the submitted PIN — it is the only auth factor and log sinks persist it.
+      logActionError('login', new Error("PIN salah"), { dbError: error?.message });
       throw new Error("PIN salah");
     }
 

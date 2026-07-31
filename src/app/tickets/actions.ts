@@ -8,6 +8,11 @@ import { createClient as createStorageClient } from "@supabase/supabase-js";
 import { authActionClient } from "@/lib/safe-action";
 import { findOrCreateVehicle } from "@/lib/vehicles";
 import { logAction, logActionError } from "@/lib/logger";
+import {
+  ALLOWED_ATTACHMENT_MIME_TYPES,
+  MAX_ATTACHMENT_BYTES,
+  sanitizeFileName,
+} from "@/lib/attachments";
 
 const createTicketSchema = z.object({
   customerName: z.string().trim().min(1, "Nama customer wajib diisi"),
@@ -286,8 +291,12 @@ const uploadAttachmentSchema = z.object({
   fileName: z.string().trim().min(1, "Nama file wajib diisi"),
   fileType: z.enum(["before", "after", "document", "other"]),
   fileSize: z.number().positive("Ukuran file tidak valid"),
-  mimeType: z.string().trim().min(1, "MIME type wajib diisi"),
-  fileData: z.string().trim().min(1, "Data file wajib diisi"), // Base64 encoded
+  mimeType: z.enum(ALLOWED_ATTACHMENT_MIME_TYPES, {
+    message: "Tipe file tidak didukung. Hanya gambar dan PDF.",
+  }),
+  // Base64 encoded. Size is checked against the decoded bytes below, not this
+  // string's length or the client-reported fileSize.
+  fileData: z.string().trim().min(1, "Data file wajib diisi"),
 });
 
 export const uploadAttachment = authActionClient
@@ -311,17 +320,26 @@ export const uploadAttachment = authActionClient
       throw new Error("Tiket tidak ditemukan");
     }
 
+    const body = Buffer.from(parsedInput.fileData, "base64");
+    if (body.byteLength > MAX_ATTACHMENT_BYTES) {
+      logActionError('uploadAttachment', new Error("File terlalu besar"), {
+        ticketId: parsedInput.ticketId,
+        bytes: body.byteLength,
+      });
+      throw new Error("File terlalu besar. Maksimal 10MB.");
+    }
+
     // Upload to Supabase Storage
     const storageClient = createStorageClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
     );
 
-    const fileName = `${parsedInput.ticketId}/${Date.now()}-${parsedInput.fileName}`;
+    const fileName = `${parsedInput.ticketId}/${Date.now()}-${sanitizeFileName(parsedInput.fileName)}`;
     const { data: uploadData, error: uploadError } = await storageClient
       .storage
       .from("ticket-attachments")
-      .upload(fileName, Buffer.from(parsedInput.fileData, "base64"), {
+      .upload(fileName, body, {
         contentType: parsedInput.mimeType,
         upsert: false,
       });

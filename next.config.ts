@@ -2,7 +2,12 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    // Attachments travel base64-encoded through a Server Action, which inflates
+    // them ~33%. The 1MB default silently rejected anything over ~750KB, while
+    // the form advertised a 10MB cap.
+    serverActions: { bodySizeLimit: "15mb" },
+  },
 };
 
 export default withSentryConfig(nextConfig, {

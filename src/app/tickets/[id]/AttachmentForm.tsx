@@ -8,6 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, X, Image as ImageIcon, FileText, Trash2 } from "lucide-react";
+import {
+  ALLOWED_ATTACHMENT_MIME_TYPES,
+  MAX_ATTACHMENT_BYTES,
+  isAllowedAttachmentMimeType,
+} from "@/lib/attachments";
 
 type Attachment = {
   id: string;
@@ -28,25 +33,34 @@ export function AttachmentForm({
   const { execute: upload, isExecuting: isUploading, result: uploadResult } = useAction(uploadAttachment);
   const { execute: deleteAttachmentAction, isExecuting: isDeleting } = useAction(deleteAttachment);
   
-  const uploadError = firstActionError(uploadResult);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const uploadError = localError ?? firstActionError(uploadResult);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState<"before" | "after" | "document" | "other">("other");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Mirrors the checks in uploadAttachment — this pair only saves a round trip,
+  // the server rejects the same cases regardless.
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        alert("File terlalu besar. Maksimal 10MB.");
-        return;
-      }
-      setSelectedFile(file);
+    if (!file) return;
+
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      setLocalError("File terlalu besar. Maksimal 10MB.");
+      return;
     }
+    if (!isAllowedAttachmentMimeType(file.type)) {
+      setLocalError("Tipe file tidak didukung. Hanya gambar dan PDF.");
+      return;
+    }
+
+    setLocalError(null);
+    setSelectedFile(file);
   };
 
   const handleUpload = async () => {
     if (!selectedFile) return;
+    if (!isAllowedAttachmentMimeType(selectedFile.type)) return;
 
     const fileData = await fileToBase64(selectedFile);
     upload({
@@ -96,7 +110,7 @@ export function AttachmentForm({
             ref={fileInputRef}
             type="file"
             onChange={handleFileSelect}
-            accept="image/*,.pdf"
+            accept={ALLOWED_ATTACHMENT_MIME_TYPES.join(",")}
             disabled={isUploading}
             className="flex-1"
           />
