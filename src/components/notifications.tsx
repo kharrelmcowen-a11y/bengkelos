@@ -20,27 +20,28 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Declared inside the effect because nothing else calls it — keeping it out
+  // here would make it a dependency that changes on every render.
   useEffect(() => {
-    // Fetch notifications on mount
+    const fetchNotifications = async () => {
+      try {
+        const response = await fetch("/api/notifications");
+        if (response.ok) {
+          const data = await response.json();
+          setNotifications(data.notifications || []);
+          setUnreadCount(data.unreadCount || 0);
+        }
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+      }
+    };
+
     fetchNotifications();
-    
+
     // Poll for new notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, []);
-
-  const fetchNotifications = async () => {
-    try {
-      const response = await fetch("/api/notifications");
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data.notifications || []);
-        setUnreadCount(data.unreadCount || 0);
-      }
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error);
-    }
-  };
 
   const markAsRead = async (notificationId: string) => {
     try {

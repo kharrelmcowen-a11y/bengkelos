@@ -31,18 +31,22 @@ function loadEnvFile(filePath: string) {
   }
 }
 
-// Try to load .env.local from the project root
+// Loaded only so the E2E_* variables below can live in .env.local for
+// convenience. The production NEXT_PUBLIC_SUPABASE_URL in that file is ignored
+// on purpose — this script writes fake shops and staff, and must never point at
+// the real project.
 const envPath = resolve(process.cwd(), '.env.local');
 loadEnvFile(envPath);
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = process.env.E2E_SUPABASE_URL;
+const supabaseServiceKey = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Missing required environment variables:');
-  console.error('- NEXT_PUBLIC_SUPABASE_URL');
-  console.error('- SUPABASE_SERVICE_ROLE_KEY');
-  console.error('\nMake sure .env.local exists in the project root with these variables set.');
+  console.error('- E2E_SUPABASE_URL');
+  console.error('- E2E_SUPABASE_SERVICE_ROLE_KEY');
+  console.error('\nThis script seeds test data and must point at a dedicated test');
+  console.error('Supabase project, not the one in NEXT_PUBLIC_SUPABASE_URL.');
   process.exit(1);
 }
 
