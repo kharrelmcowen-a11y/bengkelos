@@ -20,10 +20,11 @@ interface LogEntry {
   };
 }
 
+// Structured lines on stdout/stderr. On Vercel these land in the runtime logs
+// and Sentry picks up the errors, so this class deliberately keeps no state:
+// an in-process buffer is per-lambda-instance and reads back empty.
 class Logger {
   private isDevelopment = process.env.NODE_ENV === 'development';
-  private logBuffer: LogEntry[] = [];
-  private maxBufferSize = 100;
 
   private formatLog(entry: LogEntry): string {
     return JSON.stringify(entry);
@@ -52,16 +53,6 @@ class Logger {
         break;
       default:
         console.log(formattedLog);
-    }
-
-    // Buffer logs for potential export or error reporting
-    this.addToBuffer(entry);
-  }
-
-  private addToBuffer(entry: LogEntry) {
-    this.logBuffer.push(entry);
-    if (this.logBuffer.length > this.maxBufferSize) {
-      this.logBuffer.shift(); // Remove oldest entry
     }
   }
 
@@ -104,21 +95,6 @@ class Logger {
   debug(event: string, message?: string, context?: LogContext) {
     const entry = this.createEntry('debug', event, message, context);
     this.writeLog(entry);
-  }
-
-  // Get recent logs for debugging
-  getRecentLogs(count: number = 20): LogEntry[] {
-    return this.logBuffer.slice(-count);
-  }
-
-  // Clear the log buffer
-  clearBuffer() {
-    this.logBuffer = [];
-  }
-
-  // Export logs as JSON string
-  exportLogs(): string {
-    return JSON.stringify(this.logBuffer, null, 2);
   }
 }
 

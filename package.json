@@ -11,7 +11,6 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "sentry-wizard": "sentry-wizard -i nextjs",
-    "setup:storage": "tsx scripts/setup-storage-bucket.ts",
     "setup:test-data": "tsx scripts/setup-test-data.ts"
   },
   "dependencies": {
