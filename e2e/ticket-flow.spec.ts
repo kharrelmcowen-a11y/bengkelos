@@ -147,6 +147,26 @@ test.describe('Ticket Flow', () => {
     await context.close();
   });
 
+  test('the access cookie renews itself on every visit', async ({ browser }) => {
+    // The counter's phone must not go dark mid-shift a year after setup, so
+    // each trip through the gate pushes the expiry out another year.
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const phone = await context.newPage();
+
+    await phone.goto(`/?k=${ACCESS_TOKEN}`);
+    const [first] = await context.cookies();
+    expect(first?.name).toBe('bengkelos_access');
+
+    // Expiry is stored in whole seconds, so a shorter gap could not tell a
+    // renewed cookie from an untouched one.
+    await phone.waitForTimeout(1500);
+    await phone.goto('/dashboard');
+    const [second] = await context.cookies();
+
+    expect(second.expires).toBeGreaterThan(first.expires);
+    await context.close();
+  });
+
   test('the site is a dead end without the access token', async ({ browser }) => {
     const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
     const stranger = await context.newPage();

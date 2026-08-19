@@ -17,6 +17,21 @@ export function secretsMatch(a: string, b: string): boolean {
 }
 
 /**
+ * Shared by both places that hand out the cookie — the first trip through the
+ * gate with ?k=, and every allowed request after it. One definition, so the
+ * re-stamped cookie can never drift from the original.
+ */
+export function accessCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: ACCESS_COOKIE_MAX_AGE,
+  };
+}
+
+/**
  * Whether a missing SITE_ACCESS_TOKEN should leave the gate open. Local
  * development and the E2E defaults rely on it being open; a production build
  * with the variable missing is a misconfiguration, and staying open there would

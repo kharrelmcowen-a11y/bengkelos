@@ -19,7 +19,8 @@ till through `/login` again. Locking the till means rotating
 What keeps the shop's takings off the open internet is `src/proxy.ts`: any
 request without the access cookie gets a 404. Opening the site once with
 `?k=<SITE_ACCESS_TOKEN>` sets that cookie for a year and drops the token from
-the address bar. Leave `SITE_ACCESS_TOKEN` unset outside production and the gate
+the address bar. Every allowed request re-stamps it, so the year runs from the
+last visit: a till in daily use never reaches the expiry. Leave `SITE_ACCESS_TOKEN` unset outside production and the gate
 stays open, which is what local development and CI rely on; a production build
 without it answers 404 to everything rather than serving the shop to whoever
 finds the URL.

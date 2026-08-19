@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  ACCESS_COOKIE_MAX_AGE,
   ACCESS_COOKIE_NAME,
   ACCESS_TOKEN_PARAM,
+  accessCookieOptions,
   gateOpensWithoutToken,
   isPublicPath,
   secretsMatch,
@@ -26,7 +26,16 @@ export function proxy(request: NextRequest) {
   }
 
   const cookie = request.cookies.get(ACCESS_COOKIE_NAME)?.value;
-  if (cookie && secretsMatch(cookie, token)) return NextResponse.next();
+  if (cookie && secretsMatch(cookie, token)) {
+    // Re-stamped on the way through, so the year runs from the last visit
+    // rather than the first. A till in daily use never reaches the expiry; the
+    // cookie only lapses after a year of the shop not opening the app at all.
+    // Without this the counter's phone goes dark mid-shift, one year to the day
+    // after setup, and the shop has no idea why.
+    const response = NextResponse.next();
+    response.cookies.set(ACCESS_COOKIE_NAME, token, accessCookieOptions());
+    return response;
+  }
 
   const provided = request.nextUrl.searchParams.get(ACCESS_TOKEN_PARAM);
   if (provided && secretsMatch(provided, token)) {
@@ -35,13 +44,7 @@ export function proxy(request: NextRequest) {
     const clean = new URL(request.nextUrl);
     clean.searchParams.delete(ACCESS_TOKEN_PARAM);
     const response = NextResponse.redirect(clean);
-    response.cookies.set(ACCESS_COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: ACCESS_COOKIE_MAX_AGE,
-    });
+    response.cookies.set(ACCESS_COOKIE_NAME, token, accessCookieOptions());
     return response;
   }
 

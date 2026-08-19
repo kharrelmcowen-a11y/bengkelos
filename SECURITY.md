@@ -7,8 +7,10 @@ unusual enough to be worth writing down.
 
 - **The secret link.** `src/proxy.ts` returns 404 to any request without the
   access cookie. Opening the site once with `?k=<SITE_ACCESS_TOKEN>` sets that
-  cookie for a year. This is the only thing standing between the internet and
-  the shop's takings — the app itself has no password, by the shop's request.
+  cookie for a year, and every allowed request pushes the year out again, so a
+  till in daily use never locks itself out. This is the only thing standing
+  between the internet and the shop's takings — the app itself has no password,
+  by the shop's request.
 - **A signed session cookie.** `SESSION_SECRET` signs it; tampering invalidates it.
 - **Server-side data access only.** Every query runs on the server with the
   Supabase service role key, which is never shipped to the browser. RLS is on
