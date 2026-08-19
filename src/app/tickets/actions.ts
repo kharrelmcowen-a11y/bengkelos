@@ -13,6 +13,8 @@ import {
   MAX_ATTACHMENT_BYTES,
   sanitizeFileName,
 } from "@/lib/attachments";
+import { isLowStock } from "@/lib/inventory";
+import { notifyLowStock } from "@/lib/notifications";
 
 const createTicketSchema = z.object({
   customerName: z.string().trim().min(1, "Nama customer wajib diisi"),
@@ -240,15 +242,17 @@ export const completeTicket = authActionClient
     for (const stockedItem of stockedItems ?? []) {
       const { data: inventoryItem } = await supabase
         .from("inventory_items")
-        .select("stock_qty")
+        .select("id, name, stock_qty, reorder_point")
         .eq("id", stockedItem.inventory_item_id!)
         .single();
 
       if (!inventoryItem) continue;
 
+      const stockAfter = inventoryItem.stock_qty - stockedItem.quantity;
+
       await supabase
         .from("inventory_items")
-        .update({ stock_qty: inventoryItem.stock_qty - stockedItem.quantity })
+        .update({ stock_qty: stockAfter })
         .eq("id", stockedItem.inventory_item_id!);
 
       await supabase.from("stock_movements").insert({
@@ -259,6 +263,11 @@ export const completeTicket = authActionClient
         reason: "ticket_deduct",
         reference_id: parsedInput.ticketId,
       });
+
+      const stockLevel = { ...inventoryItem, stock_qty: stockAfter };
+      if (isLowStock(stockLevel)) {
+        await notifyLowStock(supabase, session.shopId, stockLevel);
+      }
     }
 
     await supabase
