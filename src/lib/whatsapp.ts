@@ -15,3 +15,17 @@ export function buildWhatsAppLink(
   if (!normalized) return null;
   return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
 }
+
+// The "car is ready" message staff sends once a ticket is paid and closed.
+export function buildTicketDoneMessage(input: {
+  customerName?: string | null;
+  plateNumber?: string | null;
+  shopName?: string | null;
+  total: string;
+}): string {
+  const customer = input.customerName?.trim() || "Pak/Bu";
+  const plate = input.plateNumber?.trim();
+  const vehicle = plate ? `kendaraan ${plate}` : "kendaraan Anda";
+  const shop = input.shopName?.trim() || "bengkel kami";
+  return `Halo ${customer}, ${vehicle} sudah selesai diservis di ${shop}. Total: ${input.total}. Terima kasih!`;
+}

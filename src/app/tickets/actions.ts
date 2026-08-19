@@ -14,7 +14,16 @@ import {
   sanitizeFileName,
 } from "@/lib/attachments";
 import { isLowStock } from "@/lib/inventory";
-import { notifyLowStock } from "@/lib/notifications";
+import { notifyLowStock, notifyTicketReady } from "@/lib/notifications";
+import { buildTicketDoneMessage, buildWhatsAppLink } from "@/lib/whatsapp";
+import { formatIDR } from "@/lib/format";
+
+// PostgREST returns an embedded row as an object or a single-element array
+// depending on how it reads the relationship.
+function firstRelated<T>(related: T | T[] | null): T | null {
+  if (!related) return null;
+  return Array.isArray(related) ? (related[0] ?? null) : related;
+}
 
 const createTicketSchema = z.object({
   customerName: z.string().trim().min(1, "Nama customer wajib diisi"),
@@ -205,7 +214,9 @@ export const completeTicket = authActionClient
 
     const { data: ticket } = await supabase
       .from("service_tickets")
-      .select("id, status, customer_id")
+      .select(
+        "id, status, customer_id, customers(name, phone), vehicles(plate_number), shops(name)",
+      )
       .eq("id", parsedInput.ticketId)
       .eq("shop_id", session.shopId)
       .maybeSingle();
@@ -310,6 +321,24 @@ export const completeTicket = authActionClient
     await supabase.rpc('update_customer_loyalty', {
       p_customer_id: ticket.customer_id,
       p_amount: total
+    });
+
+    // Meta's API charges per template message, so the shop still sends the
+    // "car is ready" WhatsApp itself — the alert just hands staff a one-tap
+    // link with the message already written.
+    // ponytail: one tap, not automatic. Swap notifyTicketReady's link for a
+    // provider call if the shop ever pays for the WhatsApp Cloud API.
+    const customer = firstRelated<{ name: string; phone: string | null }>(ticket.customers);
+    const waMessage = buildTicketDoneMessage({
+      customerName: customer?.name,
+      plateNumber: firstRelated<{ plate_number: string }>(ticket.vehicles)?.plate_number,
+      shopName: firstRelated<{ name: string }>(ticket.shops)?.name,
+      total: formatIDR(total),
+    });
+    await notifyTicketReady(supabase, session.shopId, {
+      ticketId: parsedInput.ticketId,
+      customerName: customer?.name ?? "Customer",
+      waLink: buildWhatsAppLink(customer?.phone, waMessage),
     });
 
     logAction('completeTicket', { 

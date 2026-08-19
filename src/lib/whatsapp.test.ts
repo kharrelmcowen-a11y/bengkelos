@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildWhatsAppLink } from "./whatsapp";
+import { buildTicketDoneMessage, buildWhatsAppLink } from "./whatsapp";
 
 test("a local 0-prefixed number becomes a 62 number", () => {
   assert.equal(
@@ -24,4 +24,23 @@ test("a missing or digitless phone yields no link", () => {
   assert.equal(buildWhatsAppLink(null, "halo"), null);
   assert.equal(buildWhatsAppLink("", "halo"), null);
   assert.equal(buildWhatsAppLink("-", "halo"), null);
+});
+
+test("the done message names the customer, plate and shop", () => {
+  assert.equal(
+    buildTicketDoneMessage({
+      customerName: "Budi",
+      plateNumber: "KB 1234 AB",
+      shopName: "Bengkel Jaya",
+      total: "Rp350.000",
+    }),
+    "Halo Budi, kendaraan KB 1234 AB sudah selesai diservis di Bengkel Jaya. Total: Rp350.000. Terima kasih!",
+  );
+});
+
+test("the done message stays readable without customer or vehicle details", () => {
+  assert.equal(
+    buildTicketDoneMessage({ customerName: "  ", plateNumber: null, shopName: null, total: "Rp0" }),
+    "Halo Pak/Bu, kendaraan Anda sudah selesai diservis di bengkel kami. Total: Rp0. Terima kasih!",
+  );
 });

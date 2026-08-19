@@ -40,3 +40,26 @@ export async function notifyLowStock(
     logDatabaseError("notifications:low_stock_insert", new Error(error.message), { shopId });
   }
 }
+
+// Staff-facing nudge that a finished car still needs its owner told. The link
+// opens WhatsApp with the message prefilled; sending stays a human tap, which
+// keeps the shop off Meta's per-message pricing and off unofficial gateways.
+export async function notifyTicketReady(
+  supabase: SupabaseClient,
+  shopId: string,
+  ticket: { ticketId: string; customerName: string; waLink: string | null },
+) {
+  const { error } = await supabase.from("notifications").insert({
+    shop_id: shopId,
+    type: "ticket_completed",
+    title: "Kabari customer",
+    message: ticket.waLink
+      ? `${ticket.customerName} — mobil selesai, kirim WA sekarang`
+      : `${ticket.customerName} — mobil selesai, nomor WA belum ada`,
+    data: { ticket_id: ticket.ticketId, wa_link: ticket.waLink },
+  });
+
+  if (error) {
+    logDatabaseError("notifications:ticket_ready", new Error(error.message), { shopId });
+  }
+}

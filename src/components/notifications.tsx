@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Package, Calendar, Wrench, Trophy } from "lucide-react";
+import { Bell, Package, Calendar, Wrench, Trophy, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,7 @@ type Notification = {
   message: string;
   read_at: string | null;
   created_at: string;
+  data: { wa_link?: string | null; ticket_id?: string } | null;
 };
 
 export function NotificationBell() {
@@ -147,6 +148,18 @@ export function NotificationBell() {
                             minute: "2-digit",
                           })}
                         </p>
+                        {notification.data?.wa_link && (
+                          <a
+                            href={notification.data.wa_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(event) => event.stopPropagation()}
+                            className="mt-2 inline-flex items-center gap-1 rounded-md bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700"
+                          >
+                            <MessageCircle className="size-3" />
+                            Kirim WA
+                          </a>
+                        )}
                       </div>
                       {!notification.read_at && (
                         <div className="size-2 rounded-full bg-blue-500 mt-1" />
