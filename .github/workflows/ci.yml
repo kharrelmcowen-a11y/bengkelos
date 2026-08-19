@@ -15,11 +15,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm audit --audit-level=high
       - run: npm run lint
       - run: npx tsc --noEmit
       - run: npm test
-      # The E2E suite needs its own Supabase project, so it stays a local/manual
-      # run until those credentials exist as repository secrets.
       - run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
@@ -52,3 +51,30 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  deploy:
+    needs: [check, e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Deploying from CI is opt-in. Without VERCEL_TOKEN every step below is
+    # skipped and `vercel --prod` from a laptop stays the way to ship. Add the
+    # three secrets to turn it on, and a push then reaches the shop only after
+    # the audit, lint, types, unit tests, the build and the E2E suite pass —
+    # which a laptop deploy skips entirely.
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Report that CI deploys are switched off
+        if: env.VERCEL_TOKEN == ''
+        run: echo "VERCEL_TOKEN is not set, skipping the deploy. See README.md."
+      - uses: actions/checkout@v4
+        if: env.VERCEL_TOKEN != ''
+      - uses: actions/setup-node@v4
+        if: env.VERCEL_TOKEN != ''
+        with:
+          node-version: 22
+      - name: Deploy to production
+        if: env.VERCEL_TOKEN != ''
+        run: npx --yes vercel@56 deploy --prod --yes --token "$VERCEL_TOKEN"
