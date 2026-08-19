@@ -44,8 +44,8 @@ export function decodeSession(token: string, now = Date.now()): Session | null {
   try {
     const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as SignedSession;
     if (typeof parsed.exp !== "number" || parsed.exp <= now) return null;
-    const { exp: _exp, ...session } = parsed;
-    return session;
+    const { staffId, shopId, name, role } = parsed;
+    return { staffId, shopId, name, role };
   } catch {
     return null;
   }
