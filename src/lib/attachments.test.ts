@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { sanitizeFileName } from "./attachments";
+import { attachmentStoragePath, sanitizeFileName } from "./attachments";
 
 test("sanitizeFileName keeps a normal name intact", () => {
   assert.equal(sanitizeFileName("foto-depan.jpg"), "foto-depan.jpg");
@@ -20,4 +20,17 @@ test("sanitizeFileName always returns a usable name", () => {
   assert.equal(sanitizeFileName("///"), "file");
   assert.equal(sanitizeFileName("!!!"), "file");
   assert.ok(sanitizeFileName("x".repeat(500)).length <= 120);
+});
+
+test("attachmentStoragePath keeps a stored key as is", () => {
+  assert.equal(attachmentStoragePath("ticket-uuid/1700-foto.jpg"), "ticket-uuid/1700-foto.jpg");
+});
+
+test("attachmentStoragePath recovers the key from a legacy public URL", () => {
+  assert.equal(
+    attachmentStoragePath(
+      "https://x.supabase.co/storage/v1/object/public/ticket-attachments/ticket-uuid/1700-foto.jpg",
+    ),
+    "ticket-uuid/1700-foto.jpg",
+  );
 });

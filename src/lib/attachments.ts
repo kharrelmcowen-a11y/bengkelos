@@ -33,3 +33,19 @@ export function sanitizeFileName(name: string): string {
     .slice(0, 120);
   return safe || "file";
 }
+
+export const ATTACHMENT_BUCKET = "ticket-attachments";
+
+// Long enough to open a photo from the ticket page, short enough that a copied
+// link is not a lasting handout.
+export const ATTACHMENT_URL_TTL_SECONDS = 60 * 60;
+
+/**
+ * The bucket is private, so rows store the storage key. Rows written while the
+ * bucket was public hold a full URL instead — take the key out of those.
+ */
+export function attachmentStoragePath(stored: string): string {
+  const marker = `/${ATTACHMENT_BUCKET}/`;
+  const index = stored.indexOf(marker);
+  return index === -1 ? stored : stored.slice(index + marker.length);
+}

@@ -14,6 +14,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import {
+  ATTACHMENT_BUCKET,
+  ATTACHMENT_URL_TTL_SECONDS,
+  attachmentStoragePath,
+} from "@/lib/attachments";
 import { Receipt, MessageCircle } from "lucide-react";
 
 export default async function TicketDetailPage({
@@ -46,7 +51,7 @@ export default async function TicketDetailPage({
     : ticket.vehicles;
   const shop = Array.isArray(ticket.shops) ? ticket.shops[0] : ticket.shops;
 
-  const [{ data: items }, { data: payments }, { data: inventoryItems }, { data: attachments }] =
+  const [{ data: items }, { data: payments }, { data: inventoryItems }, { data: attachmentRows }] =
     await Promise.all([
       supabase
         .from("ticket_items")
@@ -69,6 +74,24 @@ export default async function TicketDetailPage({
         .eq("ticket_id", id)
         .order("created_at", { ascending: true }),
     ]);
+
+  // The bucket is private: rows hold the storage key, so each one gets a
+  // short-lived signed URL for this render.
+  const storedAttachments = attachmentRows ?? [];
+  const signedUrls = storedAttachments.length
+    ? (
+        await supabase.storage
+          .from(ATTACHMENT_BUCKET)
+          .createSignedUrls(
+            storedAttachments.map((attachment) => attachmentStoragePath(attachment.file_url)),
+            ATTACHMENT_URL_TTL_SECONDS,
+          )
+      ).data ?? []
+    : [];
+  const attachments = storedAttachments.map((attachment, index) => ({
+    ...attachment,
+    file_url: signedUrls[index]?.signedUrl ?? "",
+  }));
 
   const total = (items ?? []).reduce(
     (sum, item) => sum + item.quantity * item.unit_price,
@@ -176,7 +199,7 @@ export default async function TicketDetailPage({
 
       <AttachmentForm 
         ticketId={ticket.id} 
-        existingAttachments={attachments ?? []} 
+        existingAttachments={attachments} 
       />
 
       <Card className="mt-6 space-y-1 p-4 text-sm">

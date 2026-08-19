@@ -10,6 +10,8 @@ import { findOrCreateVehicle } from "@/lib/vehicles";
 import { logAction, logActionError } from "@/lib/logger";
 import {
   ALLOWED_ATTACHMENT_MIME_TYPES,
+  ATTACHMENT_BUCKET,
+  attachmentStoragePath,
   MAX_ATTACHMENT_BYTES,
   sanitizeFileName,
 } from "@/lib/attachments";
@@ -406,7 +408,7 @@ export const uploadAttachment = authActionClient
     const fileName = `${parsedInput.ticketId}/${Date.now()}-${sanitizeFileName(parsedInput.fileName)}`;
     const { data: uploadData, error: uploadError } = await storageClient
       .storage
-      .from("ticket-attachments")
+      .from(ATTACHMENT_BUCKET)
       .upload(fileName, body, {
         contentType: parsedInput.mimeType,
         upsert: false,
@@ -420,17 +422,12 @@ export const uploadAttachment = authActionClient
       throw new Error("Gagal upload file");
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = storageClient
-      .storage
-      .from("ticket-attachments")
-      .getPublicUrl(fileName);
-
-    // Save attachment record
+    // The bucket is private, so the row keeps the storage key and the ticket
+    // page mints a short-lived signed URL when it renders.
     const { error: dbError } = await supabase.from("ticket_attachments").insert({
       shop_id: session.shopId,
       ticket_id: parsedInput.ticketId,
-      file_url: publicUrl,
+      file_url: uploadData.path,
       file_name: parsedInput.fileName,
       file_type: parsedInput.fileType,
       file_size: parsedInput.fileSize,
@@ -485,13 +482,10 @@ export const deleteAttachment = authActionClient
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
     );
 
-    const fileName = attachment.file_url.split("/").pop();
-    if (fileName) {
-      await storageClient
-        .storage
-        .from("ticket-attachments")
-        .remove([`${attachment.ticket_id}/${fileName}`]);
-    }
+    await storageClient
+      .storage
+      .from(ATTACHMENT_BUCKET)
+      .remove([attachmentStoragePath(attachment.file_url)]);
 
     // Delete from database
     const { error } = await supabase
