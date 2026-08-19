@@ -4,7 +4,10 @@
 #
 #   1. Supabase dashboard -> Project Settings -> API Keys -> create a secret key
 #   2. bash scripts/rotate-service-key.sh   (paste when prompted)
-#   3. Supabase dashboard -> disable the old legacy service_role key
+#   3. Supabase dashboard -> disable the key it replaces
+#
+# Production only: local development runs against the local Supabase stack and
+# never holds a production credential.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -18,7 +21,7 @@ if [ -z "${NEW_KEY}" ]; then
   exit 1
 fi
 
-SUPABASE_URL=$(grep '^NEXT_PUBLIC_SUPABASE_URL=' .env.local | cut -d= -f2-)
+SUPABASE_URL=${SUPABASE_URL:-https://hyivfiybznrfnhbzyyeb.supabase.co}
 
 echo "==> Checking the key against ${SUPABASE_URL}"
 STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
@@ -34,13 +37,6 @@ echo "    key works"
 echo "==> Updating Vercel production"
 vercel env rm SUPABASE_SERVICE_ROLE_KEY production --yes > /dev/null
 printf '%s' "${NEW_KEY}" | vercel env add SUPABASE_SERVICE_ROLE_KEY production > /dev/null
-echo "    done"
-
-echo "==> Updating .env.local"
-TMP=$(mktemp)
-grep -v '^SUPABASE_SERVICE_ROLE_KEY=' .env.local > "${TMP}"
-printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n' "${NEW_KEY}" >> "${TMP}"
-mv "${TMP}" .env.local
 echo "    done"
 
 echo "==> Redeploying"
