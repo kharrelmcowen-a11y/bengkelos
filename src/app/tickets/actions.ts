@@ -287,7 +287,8 @@ export const completeTicket = authActionClient
       const { error: stockUpdateError } = await supabase
         .from("inventory_items")
         .update({ stock_qty: stockAfter })
-        .eq("id", stockedItem.inventory_item_id!);
+        .eq("id", stockedItem.inventory_item_id!)
+        .eq("shop_id", session.shopId);
 
       if (stockUpdateError) {
         logActionError("completeTicket", new Error(stockUpdateError.message), {

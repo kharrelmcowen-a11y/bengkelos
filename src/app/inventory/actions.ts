@@ -96,7 +96,8 @@ export const adjustStock = authActionClient
     const { error: updateError } = await supabase
       .from("inventory_items")
       .update({ stock_qty: newStock })
-      .eq("id", parsedInput.itemId);
+      .eq("id", parsedInput.itemId)
+      .eq("shop_id", session.shopId);
 
     if (updateError) {
       logActionError('adjustStock', updateError, { 

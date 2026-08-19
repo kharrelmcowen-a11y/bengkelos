@@ -102,7 +102,8 @@ export const markArrived = authActionClient
     const { error: updateError } = await supabase
       .from("appointments")
       .update({ status: "arrived", ticket_id: ticket.id })
-      .eq("id", appointment.id);
+      .eq("id", appointment.id)
+      .eq("shop_id", session.shopId);
 
     if (updateError) throw new Error("Gagal update jadwal");
 
@@ -134,7 +135,8 @@ export const cancelAppointment = authActionClient
     const { error } = await supabase
       .from("appointments")
       .update({ status: "cancelled" })
-      .eq("id", appointment.id);
+      .eq("id", appointment.id)
+      .eq("shop_id", session.shopId);
 
     if (error) throw new Error("Gagal batalkan jadwal");
 

@@ -4,6 +4,13 @@ import { getSession } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cogsFromMovements, pickLowStock, stockValue } from "@/lib/inventory";
 import { rows } from "@/lib/query";
+import {
+  busiestItemId,
+  countUnique,
+  growthPercent,
+  sumAmounts,
+  topServices,
+} from "@/lib/reports";
 
 export async function getReportData(period: string) {
   const session = await getSession();
@@ -131,39 +138,26 @@ export async function getReportData(period: string) {
   const inventoryItems = rows<{ id: string; name: string; cost_price: number; sell_price: number; stock_qty: number; reorder_point: number }>(inventoryItemsResult, "inventory_items:all", shopId);
 
   // Calculate revenue metrics
-  const currentRevenue = currentPeriodPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const previousRevenue = previousPeriodPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const revenueGrowth = previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 : 0;
+  const currentRevenue = sumAmounts(currentPeriodPayments);
+  const previousRevenue = sumAmounts(previousPeriodPayments);
+  const revenueGrowth = growthPercent(currentRevenue, previousRevenue);
 
   // Calculate ticket metrics
-  const currentTickets = currentPeriodTickets ?? [];
-  const previousTickets = previousPeriodTickets ?? [];
-  const ticketGrowth = previousTickets.length > 0 ? ((currentTickets.length - previousTickets.length) / previousTickets.length) * 100 : 0;
+  const currentTickets = currentPeriodTickets;
+  const previousTickets = previousPeriodTickets;
+  const ticketGrowth = growthPercent(currentTickets.length, previousTickets.length);
 
   // Calculate customer metrics
-  const currentCustomers = new Set(currentPeriodCustomers.map(c => c.customer_id));
-  const previousCustomers = new Set(previousPeriodCustomers.map(c => c.customer_id));
-  const customerGrowth = previousCustomers.size > 0 ? ((currentCustomers.size - previousCustomers.size) / previousCustomers.size) * 100 : 0;
+  const currentCustomerCount = countUnique(currentPeriodCustomers, (c) => c.customer_id);
+  const previousCustomerCount = countUnique(previousPeriodCustomers, (c) => c.customer_id);
+  const customerGrowth = growthPercent(currentCustomerCount, previousCustomerCount);
 
   // Calculate average transaction value
   const avgTransactionValue = currentTickets.length > 0 ? currentRevenue / currentTickets.length : 0;
   const previousATV = previousTickets.length > 0 ? previousRevenue / previousTickets.length : 0;
-  const atvGrowth = previousATV > 0 ? ((avgTransactionValue - previousATV) / previousATV) * 100 : 0;
+  const atvGrowth = growthPercent(avgTransactionValue, previousATV);
 
-  // Analyze top services
-  const serviceMap = new Map<string, { count: number; revenue: number }>();
-  ticketItems.forEach(item => {
-    const existing = serviceMap.get(item.description) || { count: 0, revenue: 0 };
-    serviceMap.set(item.description, {
-      count: existing.count + item.quantity,
-      revenue: existing.revenue + (item.quantity * item.unit_price),
-    });
-  });
-
-  const topServices = Array.from(serviceMap.entries())
-    .map(([description, data]) => ({ description, ...data }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
+  const services = topServices(ticketItems);
 
   // Customer insights
   const customers = allCustomers;
@@ -174,18 +168,9 @@ export async function getReportData(period: string) {
     : 0;
 
   // Inventory performance
-  const itemMovements = new Map<string, number>();
-  stockMovements.forEach(movement => {
-    if (movement.inventory_item_id) {
-      const existing = itemMovements.get(movement.inventory_item_id) || 0;
-      itemMovements.set(movement.inventory_item_id, existing + Math.abs(movement.change_qty));
-    }
-  });
-
   const items = inventoryItems;
-  const topSellingItemId = Array.from(itemMovements.entries())
-    .sort((a, b) => b[1] - a[1])[0]?.[0];
-  const topSellingItem = items.find(i => i.id === topSellingItemId)?.name || "N/A";
+  const busiestId = busiestItemId(stockMovements);
+  const topSellingItem = items.find((i) => i.id === busiestId)?.name || "N/A";
 
   // 'out_of_stock' is not an allowed stock_movements reason, so the old stockout
   // metric always read zero. Report the capital tied up in low stock instead.
@@ -200,11 +185,11 @@ export async function getReportData(period: string) {
     revenueGrowth,
     totalTickets: currentTickets.length,
     ticketGrowth,
-    uniqueCustomers: currentCustomers.size,
+    uniqueCustomers: currentCustomerCount,
     customerGrowth,
     avgTransactionValue,
     atvGrowth,
-    topServices,
+    topServices: services,
     repeatCustomers,
     retentionRate,
     customerLifetimeValue,
