@@ -67,7 +67,6 @@ export default defineConfig({
     env: {
       ...process.env,
       NEXT_PUBLIC_SUPABASE_URL: supabaseUrl,
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: supabaseAnonKey,
       SUPABASE_SERVICE_ROLE_KEY: supabaseServiceRoleKey,
       SESSION_SECRET: process.env.E2E_SESSION_SECRET || 'e2e-only-session-secret',
       SITE_ACCESS_TOKEN: ACCESS_TOKEN,
