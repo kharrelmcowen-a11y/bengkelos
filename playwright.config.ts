@@ -23,6 +23,10 @@ if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
 const port = process.env.E2E_PORT || '3100';
 const baseURL = process.env.E2E_BASE_URL || `http://localhost:${port}`;
 
+// The secret-link gate runs during the suite; every context has to come in
+// through it exactly like a phone at the counter does.
+export const ACCESS_TOKEN = 'e2e-site-access-token';
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -30,6 +34,9 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
+  // The dev server compiles a route on first hit, and with five workers that
+  // can outlast the 5s default while nothing is actually wrong.
+  expect: { timeout: 10_000 },
   use: {
     baseURL,
     trace: 'on-first-retry',
@@ -63,6 +70,7 @@ export default defineConfig({
       NEXT_PUBLIC_SUPABASE_ANON_KEY: supabaseAnonKey,
       SUPABASE_SERVICE_ROLE_KEY: supabaseServiceRoleKey,
       SESSION_SECRET: process.env.E2E_SESSION_SECRET || 'e2e-only-session-secret',
+      SITE_ACCESS_TOKEN: ACCESS_TOKEN,
     },
   },
 });

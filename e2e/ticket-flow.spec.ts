@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { ACCESS_TOKEN } from '../playwright.config';
 
 test.describe('Ticket Flow', () => {
   test('complete ticket flow: create ticket → add items → add payment → complete → receipt', async ({ page }) => {
@@ -137,12 +138,25 @@ test.describe('Ticket Flow', () => {
   test('a visitor with no session is signed in without typing anything', async ({ browser }) => {
     // A fresh context has no cookie, which is what a new phone at the counter
     // looks like. It must land on the dashboard with no PIN prompt.
-    const context = await browser.newContext();
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
     const fresh = await context.newPage();
-    await fresh.goto('/');
+    await fresh.goto(`/?k=${ACCESS_TOKEN}`);
     await fresh.waitForURL('**/dashboard');
     await expect(fresh.locator('text=Halo')).toBeVisible();
     await expect(fresh.locator('input[name="pin"]')).toHaveCount(0);
+    await context.close();
+  });
+
+  test('the site is a dead end without the access token', async ({ browser }) => {
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const stranger = await context.newPage();
+
+    const blocked = await stranger.goto('/dashboard');
+    expect(blocked?.status()).toBe(404);
+
+    const guessed = await stranger.goto('/dashboard?k=wrong-token');
+    expect(guessed?.status()).toBe(404);
+
     await context.close();
   });
 
