@@ -11,12 +11,16 @@ import { logAction, logDatabaseError } from "@/lib/logger";
 export async function GET(request: Request) {
   const supabase = createAdminClient();
 
+  // Two rows, not one: the shop_id on the row picked here scopes every ticket,
+  // payment and expense the till goes on to write, so a second active account
+  // must stop the till rather than silently send the day's takings to another
+  // shop's books.
   const { data: staff, error } = await supabase
     .from("staff")
     .select("id, shop_id, name, role")
     .eq("active", true)
     .order("created_at", { ascending: true })
-    .limit(1);
+    .limit(2);
 
   if (error) {
     logDatabaseError("login:staff", new Error(error.message));
@@ -26,6 +30,17 @@ export async function GET(request: Request) {
   if (!staff || staff.length === 0) {
     return NextResponse.json(
       { error: "Belum ada staff aktif di database" },
+      { status: 500 },
+    );
+  }
+
+  if (staff.length > 1) {
+    logDatabaseError(
+      "login:staff",
+      new Error("more than one active staff row, refusing to guess the shop"),
+    );
+    return NextResponse.json(
+      { error: "Ada lebih dari satu akun aktif — nonaktifkan yang tidak dipakai" },
       { status: 500 },
     );
   }

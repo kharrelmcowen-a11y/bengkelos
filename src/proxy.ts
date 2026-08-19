@@ -3,6 +3,7 @@ import {
   ACCESS_COOKIE_MAX_AGE,
   ACCESS_COOKIE_NAME,
   ACCESS_TOKEN_PARAM,
+  gateOpensWithoutToken,
   isPublicPath,
   secretsMatch,
 } from "@/lib/access";
@@ -11,10 +12,18 @@ import {
 // type — so this is what keeps the shop's takings off the open internet. Open
 // the site once per device with ?k=<token> and the cookie carries it from then
 // on. Without SITE_ACCESS_TOKEN set the gate stays open, which is what local
-// development and the E2E defaults rely on.
+// development and the E2E defaults rely on — but a production build with the
+// variable missing (a Preview deployment, a dropped env var) would otherwise
+// serve the whole shop to anyone who found the URL, so there it fails closed.
 export function proxy(request: NextRequest) {
+  if (isPublicPath(request.nextUrl.pathname)) return NextResponse.next();
+
   const token = process.env.SITE_ACCESS_TOKEN;
-  if (!token || isPublicPath(request.nextUrl.pathname)) return NextResponse.next();
+  if (!token) {
+    return gateOpensWithoutToken(process.env.NODE_ENV)
+      ? NextResponse.next()
+      : new NextResponse("Not found", { status: 404 });
+  }
 
   const cookie = request.cookies.get(ACCESS_COOKIE_NAME)?.value;
   if (cookie && secretsMatch(cookie, token)) return NextResponse.next();

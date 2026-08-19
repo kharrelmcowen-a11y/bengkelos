@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { logout, getDashboardMetrics } from "./actions";
+import { getDashboardMetrics } from "./actions";
 import { PageShell } from "@/components/page-shell";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatIDR } from "@/lib/format";
 import { NotificationBell } from "@/components/notifications";
@@ -40,11 +39,6 @@ export default async function DashboardPage() {
         </div>
         <div className="flex items-center gap-2">
           <NotificationBell />
-          <form action={logout}>
-            <Button type="submit" variant="ghost" size="sm" className="glow-hover">
-              Keluar
-            </Button>
-          </form>
         </div>
       </div>
 

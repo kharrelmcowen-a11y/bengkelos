@@ -17,6 +17,17 @@ export function secretsMatch(a: string, b: string): boolean {
 }
 
 /**
+ * Whether a missing SITE_ACCESS_TOKEN should leave the gate open. Local
+ * development and the E2E defaults rely on it being open; a production build
+ * with the variable missing is a misconfiguration, and staying open there would
+ * publish the shop's takings, customers and phone numbers to anyone with the
+ * URL, silently.
+ */
+export function gateOpensWithoutToken(nodeEnv: string | undefined): boolean {
+  return nodeEnv !== "production";
+}
+
+/**
  * Paths the gate must not touch: the cron route carries its own bearer secret
  * and arrives without cookies, and blocking static assets would only break the
  * page for someone who is already through.

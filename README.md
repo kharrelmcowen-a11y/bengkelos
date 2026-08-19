@@ -12,13 +12,21 @@ Shop management app (POS/cashier, inventory, finance) for an auto repair shop (b
 The shop asked for a till with nothing to type, so the app has no login of its
 own: `/login` mints a session for the shop's single active `staff` row and
 redirects to the dashboard. Every page is open to that account — there are no
-roles to tell apart.
+roles to tell apart, and no way to sign out: clearing the session only sends the
+till through `/login` again. Locking the till means rotating
+`SITE_ACCESS_TOKEN` (see [SECURITY.md](SECURITY.md)).
 
 What keeps the shop's takings off the open internet is `src/proxy.ts`: any
 request without the access cookie gets a 404. Opening the site once with
 `?k=<SITE_ACCESS_TOKEN>` sets that cookie for a year and drops the token from
-the address bar. Leave `SITE_ACCESS_TOKEN` unset and the gate stays open, which
-is what local development and CI rely on.
+the address bar. Leave `SITE_ACCESS_TOKEN` unset outside production and the gate
+stays open, which is what local development and CI rely on; a production build
+without it answers 404 to everything rather than serving the shop to whoever
+finds the URL.
+
+If a second active `staff` row ever appears, `/login` refuses to guess which
+shop the till belongs to and returns a 500 instead of writing the day's takings
+into another shop's books.
 
 ## Phases
 
@@ -75,8 +83,21 @@ walks the source and fails if any write forgets that filter.
 
 ## Deploying
 
-The GitHub repo is **not** connected to Vercel — `git push` does not deploy.
+The GitHub repo is **not** connected to Vercel, so by default `git push` does
+not deploy:
 
 ```bash
 vercel --prod
 ```
+
+CI can do it instead, which is the safer route because a laptop deploy skips
+every check. Add `VERCEL_TOKEN`, `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` as
+repository secrets (the last two are in `.vercel/project.json`) and a push to
+`main` deploys once lint, types, unit tests, `npm audit`, the build and the E2E
+suite pass. Leave the secrets unset and the deploy job skips itself.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for what guards the app, how to report a
+problem, and what to do if a secret leaks. CI fails on any high-severity
+`npm audit` finding, and Dependabot opens update PRs weekly.

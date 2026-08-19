@@ -1,16 +1,9 @@
 "use server";
 
-import { redirect } from "next/navigation";
-import { destroySession } from "@/lib/session";
 import { getSession } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { pickLowStock } from "@/lib/inventory";
 import { rows } from "@/lib/query";
-
-export async function logout() {
-  await destroySession();
-  redirect("/login");
-}
 
 type InventoryRow = {
   id: string;
