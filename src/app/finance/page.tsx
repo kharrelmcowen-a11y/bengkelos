@@ -6,6 +6,7 @@ import { formatIDR } from "@/lib/format";
 import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
+import { rows } from "@/lib/query";
 
 type TicketItemRow = {
   quantity: number;
@@ -29,7 +30,7 @@ export default async function FinancePage() {
 
   const supabase = createAdminClient();
 
-  const [{ data: tickets }, { data: expenses }] = await Promise.all([
+  const [ticketsResult, expensesResult, paymentsResult] = await Promise.all([
     supabase
       .from("service_tickets")
       .select(
@@ -45,12 +46,28 @@ export default async function FinancePage() {
       .eq("shop_id", session.shopId)
       .gte("spent_at", startOfMonth.toISOString().slice(0, 10))
       .lt("spent_at", startOfNextMonth.toISOString().slice(0, 10)),
+    // Cash actually received this month, which lags the invoiced revenue above
+    // whenever a ticket is paid off in instalments.
+    supabase
+      .from("payments")
+      .select("amount")
+      .eq("shop_id", session.shopId)
+      .gte("paid_at", startOfMonth.toISOString())
+      .lt("paid_at", startOfNextMonth.toISOString()),
   ]);
+
+  const tickets = rows<{ id: string; completed_at: string; ticket_items: TicketItemRow[] }>(
+    ticketsResult,
+    "service_tickets:month",
+    session.shopId,
+  );
+  const expenses = rows<{ amount: number }>(expensesResult, "expenses:month", session.shopId);
+  const payments = rows<{ amount: number }>(paymentsResult, "payments:month", session.shopId);
 
   let revenue = 0;
   let cogs = 0;
 
-  for (const ticket of tickets ?? []) {
+  for (const ticket of tickets) {
     const items = (ticket.ticket_items ?? []) as TicketItemRow[];
     for (const item of items) {
       revenue += item.quantity * item.unit_price;
@@ -63,10 +80,9 @@ export default async function FinancePage() {
     }
   }
 
-  const totalExpenses = (expenses ?? []).reduce(
-    (sum, e) => sum + e.amount,
-    0,
-  );
+  const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  const cashIn = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const netCash = cashIn - totalExpenses;
   const grossProfit = revenue - cogs;
   const netProfit = grossProfit - totalExpenses;
 
@@ -102,6 +118,25 @@ export default async function FinancePage() {
             {formatIDR(netProfit)}
           </span>
         </div>
+      </Card>
+
+      <Card className="mt-6 space-y-1 p-4 text-sm">
+        <div className="mb-1 font-medium">Arus kas</div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Uang masuk (pembayaran)</span>
+          <span>{formatIDR(cashIn)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Uang keluar (pengeluaran)</span>
+          <span>-{formatIDR(totalExpenses)}</span>
+        </div>
+        <div className="flex justify-between border-t border-border pt-1 text-base font-semibold">
+          <span>Kas bersih</span>
+          <span className={netCash < 0 ? "text-destructive" : ""}>{formatIDR(netCash)}</span>
+        </div>
+        <p className="pt-1 text-xs text-muted-foreground">
+          Pendapatan di atas dihitung saat tiket selesai; kas dihitung saat uang diterima.
+        </p>
       </Card>
 
       <div className="mt-6">

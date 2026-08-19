@@ -4,24 +4,12 @@ import { redirect } from "next/navigation";
 import { destroySession } from "@/lib/session";
 import { getSession } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { logDatabaseError } from "@/lib/logger";
 import { pickLowStock } from "@/lib/inventory";
+import { rows } from "@/lib/query";
 
 export async function logout() {
   await destroySession();
   redirect("/login");
-}
-
-type QueryResult<T> = { data: T[] | null; error: { message: string } | null };
-
-// A failed dashboard query used to fall through as an empty array, which reads
-// on screen as a real zero. Log it instead so a broken query is visible.
-function rows<T>(result: QueryResult<T>, query: string, shopId: string): T[] {
-  if (result.error) {
-    logDatabaseError(query, new Error(result.error.message), { shopId });
-    return [];
-  }
-  return result.data ?? [];
 }
 
 type InventoryRow = {

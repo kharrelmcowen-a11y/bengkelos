@@ -198,8 +198,8 @@ export default async function ReportsPage({
             <span className="text-sm font-semibold">{reportData.topSellingItem}</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-            <span className="text-sm text-muted-foreground">Nilai stok habis</span>
-            <span className="text-sm font-semibold">{formatIDR(reportData.stockoutValue)}</span>
+            <span className="text-sm text-muted-foreground">Nilai stok menipis</span>
+            <span className="text-sm font-semibold">{formatIDR(reportData.lowStockValue)}</span>
           </div>
           <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
             <span className="text-sm text-muted-foreground">Putaran stok</span>

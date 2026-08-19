@@ -2,6 +2,8 @@
 
 import { getSession } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { cogsFromMovements, pickLowStock, stockValue } from "@/lib/inventory";
+import { rows } from "@/lib/query";
 
 export async function getReportData(period: string) {
   const session = await getSession();
@@ -33,16 +35,16 @@ export async function getReportData(period: string) {
   }
 
   const [
-    { data: currentPeriodPayments },
-    { data: previousPeriodPayments },
-    { data: currentPeriodTickets },
-    { data: previousPeriodTickets },
-    { data: currentPeriodCustomers },
-    { data: previousPeriodCustomers },
-    { data: ticketItems },
-    { data: allCustomers },
-    { data: stockMovements },
-    { data: inventoryItems },
+    currentPeriodPaymentsResult,
+    previousPeriodPaymentsResult,
+    currentPeriodTicketsResult,
+    previousPeriodTicketsResult,
+    currentPeriodCustomersResult,
+    previousPeriodCustomersResult,
+    ticketItemsResult,
+    allCustomersResult,
+    stockMovementsResult,
+    inventoryItemsResult,
   ] = await Promise.all([
     // Current period revenue
     supabase
@@ -112,13 +114,25 @@ export async function getReportData(period: string) {
     // Inventory items
     supabase
       .from("inventory_items")
-      .select("id, name, cost_price, sell_price, stock_qty")
+      .select("id, name, cost_price, sell_price, stock_qty, reorder_point")
       .eq("shop_id", session.shopId),
   ]);
 
+  const shopId = session.shopId;
+  const currentPeriodPayments = rows<{ amount: number }>(currentPeriodPaymentsResult, "payments:current", shopId);
+  const previousPeriodPayments = rows<{ amount: number }>(previousPeriodPaymentsResult, "payments:previous", shopId);
+  const currentPeriodTickets = rows<{ id: string; customer_id: string; created_at: string }>(currentPeriodTicketsResult, "service_tickets:current", shopId);
+  const previousPeriodTickets = rows<{ id: string; customer_id: string }>(previousPeriodTicketsResult, "service_tickets:previous", shopId);
+  const currentPeriodCustomers = rows<{ customer_id: string }>(currentPeriodCustomersResult, "service_tickets:customers_current", shopId);
+  const previousPeriodCustomers = rows<{ customer_id: string }>(previousPeriodCustomersResult, "service_tickets:customers_previous", shopId);
+  const ticketItems = rows<{ description: string; quantity: number; unit_price: number; ticket_id: string }>(ticketItemsResult, "ticket_items:current", shopId);
+  const allCustomers = rows<{ id: string; total_visits: number; total_spent: number }>(allCustomersResult, "customers:all", shopId);
+  const stockMovements = rows<{ inventory_item_id: string | null; change_qty: number; reason: string; created_at: string }>(stockMovementsResult, "stock_movements:current", shopId);
+  const inventoryItems = rows<{ id: string; name: string; cost_price: number; sell_price: number; stock_qty: number; reorder_point: number }>(inventoryItemsResult, "inventory_items:all", shopId);
+
   // Calculate revenue metrics
-  const currentRevenue = (currentPeriodPayments ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
-  const previousRevenue = (previousPeriodPayments ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
+  const currentRevenue = currentPeriodPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const previousRevenue = previousPeriodPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const revenueGrowth = previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 : 0;
 
   // Calculate ticket metrics
@@ -127,8 +141,8 @@ export async function getReportData(period: string) {
   const ticketGrowth = previousTickets.length > 0 ? ((currentTickets.length - previousTickets.length) / previousTickets.length) * 100 : 0;
 
   // Calculate customer metrics
-  const currentCustomers = new Set((currentPeriodCustomers ?? []).map(c => c.customer_id));
-  const previousCustomers = new Set((previousPeriodCustomers ?? []).map(c => c.customer_id));
+  const currentCustomers = new Set(currentPeriodCustomers.map(c => c.customer_id));
+  const previousCustomers = new Set(previousPeriodCustomers.map(c => c.customer_id));
   const customerGrowth = previousCustomers.size > 0 ? ((currentCustomers.size - previousCustomers.size) / previousCustomers.size) * 100 : 0;
 
   // Calculate average transaction value
@@ -138,7 +152,7 @@ export async function getReportData(period: string) {
 
   // Analyze top services
   const serviceMap = new Map<string, { count: number; revenue: number }>();
-  (ticketItems ?? []).forEach(item => {
+  ticketItems.forEach(item => {
     const existing = serviceMap.get(item.description) || { count: 0, revenue: 0 };
     serviceMap.set(item.description, {
       count: existing.count + item.quantity,
@@ -152,7 +166,7 @@ export async function getReportData(period: string) {
     .slice(0, 5);
 
   // Customer insights
-  const customers = allCustomers ?? [];
+  const customers = allCustomers;
   const repeatCustomers = customers.filter(c => c.total_visits > 1).length;
   const retentionRate = customers.length > 0 ? (repeatCustomers / customers.length) * 100 : 0;
   const customerLifetimeValue = customers.length > 0 
@@ -161,30 +175,25 @@ export async function getReportData(period: string) {
 
   // Inventory performance
   const itemMovements = new Map<string, number>();
-  (stockMovements ?? []).forEach(movement => {
+  stockMovements.forEach(movement => {
     if (movement.inventory_item_id) {
       const existing = itemMovements.get(movement.inventory_item_id) || 0;
       itemMovements.set(movement.inventory_item_id, existing + Math.abs(movement.change_qty));
     }
   });
 
-  const items = inventoryItems ?? [];
+  const items = inventoryItems;
   const topSellingItemId = Array.from(itemMovements.entries())
     .sort((a, b) => b[1] - a[1])[0]?.[0];
   const topSellingItem = items.find(i => i.id === topSellingItemId)?.name || "N/A";
 
-  const stockoutValue = (stockMovements ?? [])
-    .filter(m => m.reason === "out_of_stock")
-    .reduce((sum, m) => {
-      const item = items.find(i => i.id === m.inventory_item_id);
-      return sum + (item?.sell_price || 0);
-    }, 0);
+  // 'out_of_stock' is not an allowed stock_movements reason, so the old stockout
+  // metric always read zero. Report the capital tied up in low stock instead.
+  const lowStockValue = stockValue(pickLowStock(items, items.length));
 
-  const totalStockValue = items.reduce((sum, i) => sum + (i.cost_price * i.stock_qty), 0);
-  const totalStockSold = (stockMovements ?? [])
-    .filter(m => m.reason === "ticket_deduct")
-    .reduce((sum, m) => Math.abs(m.change_qty), 0);
-  const stockTurnover = totalStockValue > 0 ? (totalStockSold * 100) / totalStockValue : 0;
+  const totalStockValue = stockValue(items);
+  const periodCogs = cogsFromMovements(stockMovements, items);
+  const stockTurnover = totalStockValue > 0 ? periodCogs / totalStockValue : 0;
 
   return {
     totalRevenue: currentRevenue,
@@ -200,7 +209,7 @@ export async function getReportData(period: string) {
     retentionRate,
     customerLifetimeValue,
     topSellingItem,
-    stockoutValue,
+    lowStockValue,
     stockTurnover,
   };
 }
