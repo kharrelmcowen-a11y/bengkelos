@@ -4,7 +4,6 @@ import { logout, getDashboardMetrics } from "./actions";
 import { PageShell } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { formatIDR } from "@/lib/format";
 import { NotificationBell } from "@/components/notifications";
 import { AnimatedButton } from "@/components/ui/animated-button";

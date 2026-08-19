@@ -6,7 +6,6 @@ import { formatIDR, formatDate } from "@/lib/format";
 import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
-import { AnimatedButton } from "@/components/ui/animated-button";
 import { ModernCard } from "@/components/ui/modern-card";
 import { GradientBackground } from "@/components/ui/gradient-bg";
 import { Input } from "@/components/ui/input";

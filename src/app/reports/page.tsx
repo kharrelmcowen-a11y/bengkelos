@@ -4,13 +4,12 @@ import { getSession } from "@/lib/session";
 import { getReportData } from "./actions";
 import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
-import { AnimatedButton } from "@/components/ui/animated-button";
 import { ModernCard } from "@/components/ui/modern-card";
 import { GradientBackground } from "@/components/ui/gradient-bg";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatIDR } from "@/lib/format";
-import { TrendingUp, Users, Package, Wrench, Trophy, BarChart3, Sparkles } from "lucide-react";
+import { TrendingUp, Users, Package, Wrench, Trophy } from "lucide-react";
 
 export default async function ReportsPage({
   searchParams,

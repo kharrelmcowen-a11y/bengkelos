@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { AnimatedButton } from "@/components/ui/animated-button";
 import { ModernCard } from "@/components/ui/modern-card";
 import { GradientBackground } from "@/components/ui/gradient-bg";
-import { PlusCircle, Wrench, Clock, CheckCircle } from "lucide-react";
+import { PlusCircle, Wrench, Clock } from "lucide-react";
 
 export default async function TicketsPage() {
   const session = await getSession();

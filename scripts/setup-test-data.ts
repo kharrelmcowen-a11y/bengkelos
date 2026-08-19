@@ -8,7 +8,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { randomUUID } from 'crypto';
 
 // Load environment variables from .env.local
 function loadEnvFile(filePath: string) {
@@ -26,7 +25,7 @@ function loadEnvFile(filePath: string) {
         process.env[key.trim()] = cleanValue;
       }
     }
-  } catch (error) {
+  } catch {
     console.log(`Could not load ${filePath}, using system environment variables`);
   }
 }
