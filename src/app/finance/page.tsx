@@ -18,7 +18,6 @@ type TicketItemRow = {
 export default async function FinancePage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.role !== "owner") redirect("/dashboard");
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

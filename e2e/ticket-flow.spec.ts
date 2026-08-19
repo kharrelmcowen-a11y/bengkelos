@@ -124,22 +124,26 @@ test.describe('Ticket Flow', () => {
     await expect(page.locator('text=B5678ABC')).toBeVisible();
   });
 
-  test('role-based access control - finance page owner only', async ({ page }) => {
-    // The owner from the auth setup gets in.
+  test('the finance and report pages are open to the till account', async ({ page }) => {
+    // One role now — whoever is at the counter sees the money screens too.
     await page.goto('/finance');
     await expect(page).toHaveURL(/\/finance$/);
     await expect(page.locator('text=Laporan keuangan')).toBeVisible();
 
-    // The cashier does not.
-    await page.goto('/dashboard');
-    await page.click('button:has-text("Keluar")');
-    await page.waitForURL(/\/login$/);
-    await page.fill('input[name="pin"]', '5678');
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/\/dashboard$/);
+    await page.goto('/reports');
+    await expect(page).toHaveURL(/\/reports$/);
+  });
 
-    await page.goto('/finance');
-    await expect(page).toHaveURL(/\/dashboard$/);
+  test('a visitor with no session is signed in without typing anything', async ({ browser }) => {
+    // A fresh context has no cookie, which is what a new phone at the counter
+    // looks like. It must land on the dashboard with no PIN prompt.
+    const context = await browser.newContext();
+    const fresh = await context.newPage();
+    await fresh.goto('/');
+    await fresh.waitForURL('**/dashboard');
+    await expect(fresh.locator('text=Halo')).toBeVisible();
+    await expect(fresh.locator('input[name="pin"]')).toHaveCount(0);
+    await context.close();
   });
 
   test('customer loyalty points accrual after ticket completion', async ({ page }) => {

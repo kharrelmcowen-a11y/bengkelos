@@ -62,25 +62,24 @@ async function setupTestData() {
       console.log('✓ Created test shop:', shopId);
     }
 
-    // Check if test staff already exists
+    // The app signs in whoever visits /login as the shop's single account,
+    // so the seed only needs that one PIN-less cashier row.
     const { data: existingStaff } = await supabase
       .from('staff')
       .select('id')
       .eq('shop_id', shopId)
-      .eq('pin', '1234')
       .limit(1);
 
     if (existingStaff && existingStaff.length > 0) {
-      console.log('Test staff already exists with PIN 1234');
+      console.log('Test staff already exists');
     } else {
-      // Create test staff with PIN 1234
       const { error: staffError } = await supabase
         .from('staff')
         .insert({
           shop_id: shopId,
-          name: 'Test Staff',
-          pin: '1234',
-          role: 'owner',
+          name: 'Bengkel Test',
+          pin: null,
+          role: 'cashier',
           active: true,
         });
 
@@ -89,35 +88,7 @@ async function setupTestData() {
         process.exit(1);
       }
 
-      console.log('✓ Created test staff with PIN 1234');
-    }
-
-    // A non-owner account, so the role-based access test has someone who is
-    // supposed to be turned away from the finance page.
-    const { data: existingCashier } = await supabase
-      .from('staff')
-      .select('id')
-      .eq('shop_id', shopId)
-      .eq('pin', '5678')
-      .limit(1);
-
-    if (!existingCashier || existingCashier.length === 0) {
-      const { error: cashierError } = await supabase
-        .from('staff')
-        .insert({
-          shop_id: shopId,
-          name: 'Test Cashier',
-          pin: '5678',
-          role: 'cashier',
-          active: true,
-        });
-
-      if (cashierError) {
-        console.error('Error creating test cashier:', cashierError);
-        process.exit(1);
-      }
-
-      console.log('✓ Created test cashier with PIN 5678');
+      console.log('✓ Created test staff (no PIN)');
     }
 
     // Create some test inventory items
@@ -153,7 +124,7 @@ async function setupTestData() {
     }
 
     console.log('\n✓ Test data setup complete!');
-    console.log('You can now login with PIN: 1234');
+    console.log('The app signs in automatically — there is no PIN.');
     console.log('Test shop ID:', shopId);
   } catch (error) {
     console.error('Error during setup:', error);

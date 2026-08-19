@@ -19,7 +19,6 @@ export default async function ReportsPage({
   const { period = "7d" } = await searchParams;
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.role !== "owner") redirect("/dashboard");
 
   const reportData = await getReportData(period);
 

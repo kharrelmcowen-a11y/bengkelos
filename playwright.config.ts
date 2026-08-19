@@ -50,7 +50,10 @@ export default defineConfig({
   ],
   webServer: {
     command: `npm run dev -- --port ${port}`,
-    url: baseURL,
+    // A static asset, because every page redirects: / sends a visitor through
+    // /login to /dashboard, and the readiness probe keeps no cookies, so it
+    // would bounce between them until it gave up.
+    url: `${baseURL}/favicon.ico`,
     reuseExistingServer: false,
     timeout: 120 * 1000,
     // Next.js looks up process.env before .env.local, so these win.

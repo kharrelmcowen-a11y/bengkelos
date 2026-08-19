@@ -13,10 +13,3 @@ export const authActionClient = actionClient.use(async ({ next }) => {
   if (!session) redirect("/login");
   return next({ ctx: { session } });
 });
-
-export const ownerActionClient = actionClient.use(async ({ next }) => {
-  const session = await getSession();
-  if (!session) redirect("/login");
-  if (session.role !== "owner") throw new Error("Hanya owner yang bisa akses");
-  return next({ ctx: { session } });
-});

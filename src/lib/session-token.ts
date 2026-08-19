@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12; // 12h shift-length session
+export const SESSION_COOKIE_NAME = "bengkelos_session";
 
 export type Session = {
   staffId: string;
@@ -49,4 +50,24 @@ export function decodeSession(token: string, now = Date.now()): Session | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * The cookie a signed-in session is carried in. Returned as data rather than
+ * set directly, because a route handler has to attach it to the response it
+ * returns — a cookie written through next/headers is dropped when the handler
+ * answers with a fresh NextResponse.
+ */
+export function sessionCookie(session: Session, now = Date.now()) {
+  return {
+    name: SESSION_COOKIE_NAME,
+    value: encodeSession(session, now),
+    options: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax" as const,
+      path: "/",
+      maxAge: SESSION_MAX_AGE_SECONDS,
+    },
+  };
 }

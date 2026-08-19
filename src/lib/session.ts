@@ -1,24 +1,19 @@
 import { cookies } from "next/headers";
 import {
   decodeSession,
-  encodeSession,
-  SESSION_MAX_AGE_SECONDS,
+  SESSION_COOKIE_NAME,
+  sessionCookie,
   type Session,
 } from "./session-token";
 
-const COOKIE_NAME = "bengkelos_session";
+const COOKIE_NAME = SESSION_COOKIE_NAME;
 
 export type { Session };
 
 export async function createSession(session: Session) {
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, encodeSession(session), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_MAX_AGE_SECONDS,
-  });
+  const cookie = sessionCookie(session);
+  cookieStore.set(cookie.name, cookie.value, cookie.options);
 }
 
 export async function getSession(): Promise<Session | null> {

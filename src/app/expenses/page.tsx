@@ -12,7 +12,6 @@ import { PlusCircle } from "lucide-react";
 export default async function ExpensesPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.role !== "owner") redirect("/dashboard");
 
   const supabase = createAdminClient();
   const { data: expenses } = await supabase

@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ownerActionClient } from "@/lib/safe-action";
+import { authActionClient } from "@/lib/safe-action";
 
 const createExpenseSchema = z.object({
   category: z.enum(["rent", "utilities", "salary", "supplies", "other"], {
@@ -14,7 +14,7 @@ const createExpenseSchema = z.object({
   spentAt: z.string().min(1, "Tanggal wajib diisi"),
 });
 
-export const createExpense = ownerActionClient
+export const createExpense = authActionClient
   .inputSchema(createExpenseSchema)
   .action(async ({ parsedInput, ctx }) => {
     const { session } = ctx;

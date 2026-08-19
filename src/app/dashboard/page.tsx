@@ -37,9 +37,6 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold gradient-text">Halo, {session.name}</h1>
-          <Badge variant="secondary" className="mt-2 capitalize">
-            {session.role}
-          </Badge>
         </div>
         <div className="flex items-center gap-2">
           <NotificationBell />
@@ -200,28 +197,24 @@ export default async function DashboardPage() {
           Pelanggan
         </AnimatedButton>
         
-        {session.role === "owner" && (
-          <AnimatedButton 
-            href="/reports"
-            variant="outline"
-            className="w-full justify-start gap-3 py-4 h-auto text-base gradient-border"
-          >
-            <BarChart3 className="size-5" />
-            Laporan analitik
-            <Sparkles className="size-4 ml-auto" />
-          </AnimatedButton>
-        )}
+        <AnimatedButton
+          href="/reports"
+          variant="outline"
+          className="w-full justify-start gap-3 py-4 h-auto text-base gradient-border"
+        >
+          <BarChart3 className="size-5" />
+          Laporan analitik
+          <Sparkles className="size-4 ml-auto" />
+        </AnimatedButton>
         
-        {session.role === "owner" && (
-          <AnimatedButton 
-            href="/finance"
-            variant="outline"
-            className="w-full justify-start gap-3 py-4 h-auto text-base"
-          >
-            <LineChart className="size-5" />
-            Laporan keuangan
-          </AnimatedButton>
-        )}
+        <AnimatedButton
+          href="/finance"
+          variant="outline"
+          className="w-full justify-start gap-3 py-4 h-auto text-base"
+        >
+          <LineChart className="size-5" />
+          Laporan keuangan
+        </AnimatedButton>
       </div>
     </PageShell>
   );
