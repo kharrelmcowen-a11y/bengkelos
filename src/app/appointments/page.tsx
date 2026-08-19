@@ -9,13 +9,14 @@ import { AnimatedButton } from "@/components/ui/animated-button";
 import { ModernCard } from "@/components/ui/modern-card";
 import { GradientBackground } from "@/components/ui/gradient-bg";
 import { PlusCircle, CalendarClock, Clock, User } from "lucide-react";
+import { rows } from "@/lib/query";
 
 export default async function AppointmentsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
   const supabase = createAdminClient();
-  const { data: appointments } = await supabase
+  const appointmentsResult = await supabase
     .from("appointments")
     .select(
       "id, customer_name, plate_number, brand, model, scheduled_at, notes",
@@ -23,6 +24,8 @@ export default async function AppointmentsPage() {
     .eq("shop_id", session.shopId)
     .eq("status", "scheduled")
     .order("scheduled_at", { ascending: true });
+
+  const appointments = rows(appointmentsResult, "appointments:list", session.shopId);
 
   const groups = new Map<
     string,

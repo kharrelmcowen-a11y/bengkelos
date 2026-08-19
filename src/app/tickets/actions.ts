@@ -233,27 +233,57 @@ export const completeTicket = authActionClient
       throw new Error("Tiket belum lunas, tidak bisa diselesaikan");
     }
 
-    const { data: stockedItems } = await supabase
+    const { data: stockedItems, error: stockedItemsError } = await supabase
       .from("ticket_items")
       .select("inventory_item_id, quantity")
       .eq("ticket_id", parsedInput.ticketId)
       .not("inventory_item_id", "is", null);
 
+    // Completing the ticket without this list would mark it done while the
+    // parts it consumed stay on the shelf, so stop rather than under-deduct.
+    if (stockedItemsError) {
+      logActionError("completeTicket", new Error(stockedItemsError.message), {
+        ticketId: parsedInput.ticketId,
+        shopId: session.shopId,
+      });
+      throw new Error("Gagal baca item tiket, tiket belum diselesaikan");
+    }
+
     for (const stockedItem of stockedItems ?? []) {
-      const { data: inventoryItem } = await supabase
+      const { data: inventoryItem, error: inventoryItemError } = await supabase
         .from("inventory_items")
         .select("id, name, stock_qty, reorder_point")
         .eq("id", stockedItem.inventory_item_id!)
         .single();
 
-      if (!inventoryItem) continue;
+      if (inventoryItemError || !inventoryItem) {
+        logActionError(
+          "completeTicket",
+          new Error(inventoryItemError?.message ?? "inventory item missing"),
+          {
+            ticketId: parsedInput.ticketId,
+            shopId: session.shopId,
+            inventoryItemId: stockedItem.inventory_item_id,
+          },
+        );
+        continue;
+      }
 
       const stockAfter = inventoryItem.stock_qty - stockedItem.quantity;
 
-      await supabase
+      const { error: stockUpdateError } = await supabase
         .from("inventory_items")
         .update({ stock_qty: stockAfter })
         .eq("id", stockedItem.inventory_item_id!);
+
+      if (stockUpdateError) {
+        logActionError("completeTicket", new Error(stockUpdateError.message), {
+          ticketId: parsedInput.ticketId,
+          shopId: session.shopId,
+          inventoryItemId: stockedItem.inventory_item_id,
+        });
+        throw new Error("Gagal kurangi stok, tiket belum diselesaikan");
+      }
 
       await supabase.from("stock_movements").insert({
         shop_id: session.shopId,

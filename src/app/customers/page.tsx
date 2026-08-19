@@ -11,6 +11,7 @@ import { GradientBackground } from "@/components/ui/gradient-bg";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Trophy, TrendingUp, Users, Crown } from "lucide-react";
+import { rows } from "@/lib/query";
 
 export default async function CustomersPage({
   searchParams,
@@ -33,7 +34,7 @@ export default async function CustomersPage({
     query = query.or(`name.ilike.%${q.trim()}%,phone.ilike.%${q.trim()}%`);
   }
 
-  const { data: customers } = await query;
+  const customers = rows(await query, "customers:list", session.shopId);
 
   return (
     <PageShell>

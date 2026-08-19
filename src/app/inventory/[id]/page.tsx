@@ -7,6 +7,7 @@ import { PageShell } from "@/components/page-shell";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { rows } from "@/lib/query";
 
 export default async function InventoryItemPage({
   params,
@@ -30,12 +31,14 @@ export default async function InventoryItemPage({
 
   if (!item) notFound();
 
-  const { data: movements } = await supabase
+  const movementsResult = await supabase
     .from("stock_movements")
     .select("change_qty, reason, created_at")
     .eq("inventory_item_id", id)
     .order("created_at", { ascending: false })
     .limit(20);
+
+  const movements = rows(movementsResult, "stock_movements:item", session.shopId);
 
   const isLow = item.stock_qty <= item.reorder_point;
 

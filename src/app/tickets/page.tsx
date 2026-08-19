@@ -9,13 +9,14 @@ import { AnimatedButton } from "@/components/ui/animated-button";
 import { ModernCard } from "@/components/ui/modern-card";
 import { GradientBackground } from "@/components/ui/gradient-bg";
 import { PlusCircle, Wrench, Clock } from "lucide-react";
+import { rows } from "@/lib/query";
 
 export default async function TicketsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
   const supabase = createAdminClient();
-  const { data: tickets } = await supabase
+  const ticketsResult = await supabase
     .from("service_tickets")
     .select(
       "id, status, created_at, customers(name), vehicles(plate_number, brand, model)",
@@ -23,6 +24,8 @@ export default async function TicketsPage() {
     .eq("shop_id", session.shopId)
     .in("status", ["open", "in_progress"])
     .order("created_at", { ascending: false });
+
+  const tickets = rows(ticketsResult, "service_tickets:list", session.shopId);
 
   return (
     <PageShell>

@@ -11,6 +11,7 @@ import { ModernCard } from "@/components/ui/modern-card";
 import { GradientBackground } from "@/components/ui/gradient-bg";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, ScanLine, Package, AlertTriangle } from "lucide-react";
+import { rows } from "@/lib/query";
 
 export default async function InventoryPage({
   searchParams,
@@ -32,7 +33,7 @@ export default async function InventoryPage({
     query = query.or(`name.ilike.%${q.trim()}%,sku.ilike.%${q.trim()}%`);
   }
 
-  const { data: items } = await query;
+  const items = rows(await query, "inventory_items:list", session.shopId);
 
   return (
     <PageShell>
