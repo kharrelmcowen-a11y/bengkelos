@@ -61,78 +61,85 @@ test.describe('Ticket Flow', () => {
   });
 
   test('inventory stock deduction after ticket completion', async ({ page }) => {
-    // This test would require setting up inventory items first
-    // For now, it's a placeholder for the inventory flow test
-    
-    await page.goto('/dashboard');
-    
-    // Navigate to inventory
-    await page.click('a[href="/inventory"]');
-    await page.waitForURL('/inventory');
-    
-    // Check that inventory page loads
-    await expect(page.locator('text=Stok barang')).toBeVisible();
+    // Read the starting stock straight off the inventory page.
+    await page.goto('/inventory');
+    const stockCard = page.locator('a', { hasText: 'Oli Mesin' }).first();
+    const before = Number((await stockCard.innerText()).match(/(\d+)\s*botol/)![1]);
+
+    await page.goto('/tickets/new');
+    await page.fill('input[name="customerName"]', 'Stock Test Customer');
+    await page.fill('input[name="plateNumber"]', 'B4321STK');
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/tickets\/[a-f0-9-]+$/);
+
+    // Pick the part from stock rather than typing a free-text line, so
+    // completing the ticket has something to deduct.
+    const partSelect = page.locator('select:has(option:text-matches("Item bebas"))');
+    const partValue = await partSelect
+      .locator('option', { hasText: 'Oli Mesin' })
+      .first()
+      .getAttribute('value');
+    await partSelect.selectOption(partValue!);
+    await page.fill('input[name="quantity"]', '2');
+    await page.click('button:has-text("Tambah")');
+    await page.waitForSelector('text=Oli Mesin');
+
+    const total = 2 * 45000;
+    await page.fill('input[name="amount"]', String(total));
+    await page.selectOption('select[name="method"]', 'cash');
+    await page.click('button:has-text("Bayar")');
+    await page.waitForSelector('button:has-text("Selesaikan tiket")');
+    await page.click('button:has-text("Selesaikan tiket")');
+    await page.waitForSelector('a:has-text("Lihat struk")');
+
+    await page.goto('/inventory');
+    const after = Number(
+      (await page.locator('a', { hasText: 'Oli Mesin' }).first().innerText()).match(/(\d+)\s*botol/)![1],
+    );
+    expect(after).toBe(before - 2);
   });
 
   test('appointment to ticket conversion', async ({ page }) => {
-    await page.goto('/dashboard');
-    
-    // Check if appointment link exists (may not be implemented yet)
-    const appointmentLink = page.locator('a[href="/appointments/new"]');
-    const count = await appointmentLink.count();
-    
-    if (count === 0) {
-      console.log('Appointment feature not implemented yet, skipping test');
-      return;
-    }
-    
-    // Create appointment
-    await appointmentLink.click();
-    await page.waitForURL('/appointments/new');
-    
-    // Fill appointment form
+    await page.goto('/appointments/new');
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(10, 0, 0, 0);
+
+    await page.fill('input[name="scheduledAt"]', tomorrow.toISOString().slice(0, 16));
     await page.fill('input[name="customerName"]', 'Appointment Customer');
     await page.fill('input[name="customerPhone"]', '08123456789');
     await page.fill('input[name="plateNumber"]', 'B5678ABC');
     await page.fill('input[name="brand"]', 'Honda');
     await page.fill('input[name="model"]', 'Jazz');
-    
-    // Set appointment time for tomorrow
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(10, 0, 0, 0);
-    const appointmentTime = tomorrow.toISOString().slice(0, 16);
-    
-    await page.fill('input[name="scheduledAt"]', appointmentTime);
-    await page.fill('textarea[name="notes"]', 'Test appointment');
-    
+    await page.fill('input[name="notes"]', 'Test appointment');
     await page.click('button[type="submit"]');
-    
-    // Wait for redirect to appointments page
+
     await page.waitForURL('/appointments');
-    
-    // Verify appointment appears
     await expect(page.locator('text=Appointment Customer')).toBeVisible();
+
+    // Arriving turns the booking into a live ticket.
+    await page.click('button:has-text("Tandai datang")');
+    await page.waitForURL(/\/tickets\/[a-f0-9-]+$/);
+    await expect(page.locator('text=B5678ABC')).toBeVisible();
   });
 
   test('role-based access control - finance page owner only', async ({ page }) => {
-    // This test would require creating test users with different roles
-    // For now, it's a placeholder for RBAC testing
-    
-    await page.goto('/dashboard');
-    
-    // Try to access finance page (should work for owner, redirect for others)
+    // The owner from the auth setup gets in.
     await page.goto('/finance');
-    
-    // If redirected to dashboard, user is not owner
-    // If on finance page, user is owner
-    const currentUrl = page.url();
-    if (currentUrl.includes('/dashboard')) {
-      console.log('User is not owner - correctly redirected');
-    } else if (currentUrl.includes('/finance')) {
-      console.log('User is owner - can access finance page');
-      await expect(page.locator('text=Laporan keuangan')).toBeVisible();
-    }
+    await expect(page).toHaveURL(/\/finance$/);
+    await expect(page.locator('text=Laporan keuangan')).toBeVisible();
+
+    // The cashier does not.
+    await page.goto('/dashboard');
+    await page.click('button:has-text("Keluar")');
+    await page.waitForURL(/\/login$/);
+    await page.fill('input[name="pin"]', '5678');
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/dashboard$/);
+
+    await page.goto('/finance');
+    await expect(page).toHaveURL(/\/dashboard$/);
   });
 
   test('customer loyalty points accrual after ticket completion', async ({ page }) => {
@@ -142,9 +149,12 @@ test.describe('Ticket Flow', () => {
     await page.click('a[href="/tickets/new"]');
     await page.waitForURL('/tickets/new');
     
-    await page.fill('input[name="customerName"]', 'Loyalty Test Customer');
+    // Points accumulate on a returning customer, so this run gets its own.
+    const stamp = Date.now();
+    const loyaltyCustomer = `Loyalty Customer ${stamp}`;
+    await page.fill('input[name="customerName"]', loyaltyCustomer);
     await page.fill('input[name="customerPhone"]', '08123456789');
-    await page.fill('input[name="plateNumber"]', 'B9999ZZZ');
+    await page.fill('input[name="plateNumber"]', `B${stamp % 10000}ZZ`);
     await page.fill('input[name="brand"]', 'Test Brand');
     await page.fill('input[name="model"]', 'Test Model');
     
@@ -175,23 +185,15 @@ test.describe('Ticket Flow', () => {
     await page.goto('/customers');
     
     // Search for the test customer
-    await page.fill('input[name="q"]', 'Loyalty Test Customer');
+    await page.fill('input[name="q"]', loyaltyCustomer);
     await page.click('button:has-text("Cari")');
     
     // Wait for search results to load
     await page.waitForTimeout(2000);
     
-    // Check if customer appears in the list
-    const customerElement = page.locator('text=Loyalty Test Customer');
-    const count = await customerElement.count();
-    
-    if (count > 0) {
-      // Verify loyalty points are displayed
-      await expect(customerElement).toBeVisible();
-      await expect(page.locator('text=50 poin')).toBeVisible();
-    } else {
-      console.log('Customer not found in search results, loyalty points may need manual verification');
-    }
+    const customerRow = page.locator('a', { hasText: loyaltyCustomer }).first();
+    await expect(customerRow).toBeVisible();
+    await expect(customerRow).toContainText('50 poin');
   });
 
   test('ticket attachment upload and display', async ({ page }) => {
@@ -210,13 +212,21 @@ test.describe('Ticket Flow', () => {
     await page.click('button[type="submit"]');
     await page.waitForURL(/\/tickets\/[a-f0-9-]+$/);
     
-    // Note: File upload testing in Playwright requires actual file handling
-    // This is a placeholder to verify the attachment form is present
     await expect(page.locator('text=Lampiran Foto/Dokumen')).toBeVisible();
-    await expect(page.locator('input[type="file"]')).toBeVisible();
-    
-    // Verify file type selector exists in the attachment section
-    const attachmentSection = page.locator('text=Lampiran Foto/Dokumen').locator('..');
-    await expect(attachmentSection.locator('select')).toBeVisible();
+
+    // A one-pixel PNG is enough to exercise upload, storage and the signed URL
+    // the private bucket now requires.
+    await page.setInputFiles('input[type="file"]', {
+      name: 'foto-depan.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        'base64',
+      ),
+    });
+    await page.click('button:has-text("Upload")');
+
+    const uploaded = page.locator('text=foto-depan.png');
+    await expect(uploaded).toBeVisible({ timeout: 15000 });
   });
 });

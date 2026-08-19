@@ -1,4 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
+import { loadE2eEnv } from './e2e/env';
+
+loadE2eEnv();
 
 // These tests create shops, tickets and payments. They must never run against
 // the production project, so the Supabase credentials have to be passed in

@@ -7,15 +7,16 @@ credentials are read from `E2E_*` variables rather than `.env.local`, and
 
 Two ways to get a throwaway database:
 
-## Option A — local Supabase (needs Docker)
+## Option A — local Supabase (needs Docker), what this repo is set up for
 
 ```bash
-npx supabase init          # once; writes supabase/config.toml
-npx supabase start         # boots Postgres + API, applies supabase/migrations
+./node_modules/.bin/supabase start   # boots Postgres + API, applies supabase/migrations
 ```
 
-`supabase start` prints an API URL (usually `http://127.0.0.1:54321`) plus anon
-and service_role keys. Put them in `.env.local`:
+`supabase/config.toml` is committed, so `init` is already done. `start` prints an
+API URL (usually `http://127.0.0.1:54321`) plus anon and service_role keys —
+they are the CLI's fixed demo keys and only work against localhost. Put them in
+`.env.local`:
 
 ```bash
 E2E_SUPABASE_URL=http://127.0.0.1:54321
@@ -25,10 +26,20 @@ E2E_SESSION_SECRET=e2e-only-session-secret
 E2E_TEST_PIN=1234
 ```
 
+`supabase/seed.sql` runs on every `start`/`db reset`. It only grants the API
+roles their DML rights, which the hosted project does through default
+privileges and the local stack does not — without it every query comes back
+"permission denied". RLS behaves the same in both.
+
+Stop the stack with `./node_modules/.bin/supabase stop`, wipe it back to the
+migrations with `./node_modules/.bin/supabase db reset`.
+
 ## Option B — a second Supabase cloud project
 
 Create an empty project, run every file in `supabase/migrations/` against it in
 order, then fill in the same `E2E_*` variables with that project's URL and keys.
+Note the free plan allows two active projects per member, so this may require
+pausing another one.
 
 ## Then
 

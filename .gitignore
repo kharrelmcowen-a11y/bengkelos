@@ -38,3 +38,7 @@ e2e/auth-state.json
 playwright-report/
 test-results/
 .env*
+
+# local Supabase CLI state
+supabase/.temp
+supabase/.branches

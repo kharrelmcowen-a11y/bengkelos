@@ -6,36 +6,11 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { loadE2eEnv } from '../e2e/env';
 
-// Load environment variables from .env.local
-function loadEnvFile(filePath: string) {
-  try {
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n');
-    
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      if (trimmedLine && !trimmedLine.startsWith('#') && trimmedLine.includes('=')) {
-        const [key, ...valueParts] = trimmedLine.split('=');
-        const value = valueParts.join('=').trim();
-        // Remove quotes if present
-        const cleanValue = value.replace(/^["']|["']$/g, '');
-        process.env[key.trim()] = cleanValue;
-      }
-    }
-  } catch {
-    console.log(`Could not load ${filePath}, using system environment variables`);
-  }
-}
-
-// Loaded only so the E2E_* variables below can live in .env.local for
-// convenience. The production NEXT_PUBLIC_SUPABASE_URL in that file is ignored
-// on purpose — this script writes fake shops and staff, and must never point at
-// the real project.
-const envPath = resolve(process.cwd(), '.env.local');
-loadEnvFile(envPath);
+// Only the E2E_* variables are read out of .env.local: this script writes fake
+// shops and staff, and must never point at the real project.
+loadE2eEnv();
 
 const supabaseUrl = process.env.E2E_SUPABASE_URL;
 const supabaseServiceKey = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
@@ -115,6 +90,34 @@ async function setupTestData() {
       }
 
       console.log('✓ Created test staff with PIN 1234');
+    }
+
+    // A non-owner account, so the role-based access test has someone who is
+    // supposed to be turned away from the finance page.
+    const { data: existingCashier } = await supabase
+      .from('staff')
+      .select('id')
+      .eq('shop_id', shopId)
+      .eq('pin', '5678')
+      .limit(1);
+
+    if (!existingCashier || existingCashier.length === 0) {
+      const { error: cashierError } = await supabase
+        .from('staff')
+        .insert({
+          shop_id: shopId,
+          name: 'Test Cashier',
+          pin: '5678',
+          role: 'cashier',
+          active: true,
+        });
+
+      if (cashierError) {
+        console.error('Error creating test cashier:', cashierError);
+        process.exit(1);
+      }
+
+      console.log('✓ Created test cashier with PIN 5678');
     }
 
     // Create some test inventory items
