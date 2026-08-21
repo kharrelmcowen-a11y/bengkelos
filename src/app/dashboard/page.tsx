@@ -190,7 +190,10 @@ export default async function DashboardPage() {
           <Trophy className="size-5" />
           Pelanggan
         </AnimatedButton>
-        
+        {/* Hidden for cashier and mechanic: the pages redirect them anyway, and a
+            button that bounces you looks like the till is broken. */}
+        {session.role === "owner" ? (
+          <>
         <AnimatedButton
           href="/reports"
           variant="outline"
@@ -209,6 +212,8 @@ export default async function DashboardPage() {
           <LineChart className="size-5" />
           Laporan keuangan
         </AnimatedButton>
+          </>
+        ) : null}
       </div>
     </PageShell>
   );

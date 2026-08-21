@@ -18,6 +18,9 @@ type TicketItemRow = {
 export default async function FinancePage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  // Owner-only, as it was before the PIN came out. The till stands where
+  // customers and mechanics can see it; takings and margins do not belong there.
+  if (session.role !== "owner") redirect("/dashboard");
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

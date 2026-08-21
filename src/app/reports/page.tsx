@@ -19,6 +19,9 @@ export default async function ReportsPage({
   const { period = "7d" } = await searchParams;
   const session = await getSession();
   if (!session) redirect("/login");
+  // Owner-only, as it was before the PIN came out. The till stands where
+  // customers and mechanics can see it; takings and margins do not belong there.
+  if (session.role !== "owner") redirect("/dashboard");
 
   const reportData = await getReportData(period);
 

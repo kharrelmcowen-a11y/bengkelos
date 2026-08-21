@@ -9,25 +9,34 @@ Shop management app (POS/cashier, inventory, finance) for an auto repair shop (b
 
 ## Access
 
-The shop asked for a till with nothing to type, so the app has no login of its
-own: `/login` mints a session for the shop's single active `staff` row and
-redirects to the dashboard. Every page is open to that account — there are no
-roles to tell apart, and no way to sign out: clearing the session only sends the
-till through `/login` again. Locking the till means rotating
-`SITE_ACCESS_TOKEN` (see [SECURITY.md](SECURITY.md)).
+Every staff member signs in with a PIN. `verify_staff_pin()` compares it inside
+Postgres against a bcrypt hash, so the app never handles the hash and a database
+dump does not hand over the PINs. Five wrong tries from the same caller in
+fifteen minutes locks that caller out; the counter can still work, because the
+lockout buckets by caller rather than by account.
 
-What keeps the shop's takings off the open internet is `src/proxy.ts`: any
-request without the access cookie gets a 404. Opening the site once with
-`?k=<SITE_ACCESS_TOKEN>` sets that cookie for a year and drops the token from
-the address bar. Every allowed request re-stamps it, so the year runs from the
-last visit: a till in daily use never reaches the expiry. Leave `SITE_ACCESS_TOKEN` unset outside production and the gate
-stays open, which is what local development and CI rely on; a production build
-without it answers 404 to everything rather than serving the shop to whoever
-finds the URL.
+Roles are enforced, not decorative. `owner` reaches finance, reports and
+expenses; `cashier` and `mechanic` are redirected away from them and never see
+the buttons. The rule lives in `ownerActionClient` for actions and in a
+`session.role !== "owner"` check on each of the three pages.
 
-If a second active `staff` row ever appears, `/login` refuses to guess which
-shop the till belongs to and returns a 500 instead of writing the day's takings
-into another shop's books.
+`src/proxy.ts` sends anyone without a session cookie to `/login`. It is a
+redirect, not the security boundary — it only asks whether a cookie exists,
+never whether it is valid. The real checks are `getSession()` on every page and
+the action clients on every mutation. Its job is to cover the four client-only
+form pages, which cannot call `getSession()` themselves, and any page added
+later before someone remembers to guard it.
+
+Set a PIN with:
+
+```
+STAFF_PIN=1234 npm run set-pin -- --role owner
+npm run set-pin -- --list     # who exists, and who still has no PIN
+```
+
+The PIN is read from the environment rather than a flag, so it stays out of
+shell history, and it is hashed inside Postgres, so the plaintext is never
+written down.
 
 ## Phases
 
@@ -61,7 +70,6 @@ the hosted project does through default privileges and the local stack does not.
 | `SUPABASE_SERVICE_ROLE_KEY` | both | server-side DB access; bypasses RLS |
 | `SESSION_SECRET` | both | signs the session cookie |
 | `CRON_SECRET` | production | bearer token the appointment-reminder cron must present |
-| `SITE_ACCESS_TOKEN` | production | secret-link gate; unset disables the gate |
 
 Rotate the service key with `bash scripts/rotate-service-key.sh` — it reads the
 new value from a hidden prompt, checks it, updates Vercel, redeploys, verifies.

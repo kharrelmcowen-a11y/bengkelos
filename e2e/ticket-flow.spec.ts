@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { ACCESS_TOKEN } from '../playwright.config';
 
 test.describe('Ticket Flow', () => {
   test('complete ticket flow: create ticket → add items → add payment → complete → receipt', async ({ page }) => {
@@ -135,47 +134,44 @@ test.describe('Ticket Flow', () => {
     await expect(page).toHaveURL(/\/reports$/);
   });
 
-  test('a visitor with no session is signed in without typing anything', async ({ browser }) => {
-    // A fresh context has no cookie, which is what a new phone at the counter
-    // looks like. It must land on the dashboard with no PIN prompt.
-    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
-    const fresh = await context.newPage();
-    await fresh.goto(`/?k=${ACCESS_TOKEN}`);
-    await fresh.waitForURL('**/dashboard');
-    await expect(fresh.locator('text=Halo')).toBeVisible();
-    await expect(fresh.locator('input[name="pin"]')).toHaveCount(0);
-    await context.close();
-  });
-
-  test('the access cookie renews itself on every visit', async ({ browser }) => {
-    // The counter's phone must not go dark mid-shift a year after setup, so
-    // each trip through the gate pushes the expiry out another year.
-    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
-    const phone = await context.newPage();
-
-    await phone.goto(`/?k=${ACCESS_TOKEN}`);
-    const [first] = await context.cookies();
-    expect(first?.name).toBe('bengkelos_access');
-
-    // Expiry is stored in whole seconds, so a shorter gap could not tell a
-    // renewed cookie from an untouched one.
-    await phone.waitForTimeout(1500);
-    await phone.goto('/dashboard');
-    const [second] = await context.cookies();
-
-    expect(second.expires).toBeGreaterThan(first.expires);
-    await context.close();
-  });
-
-  test('the site is a dead end without the access token', async ({ browser }) => {
+  test('a visitor with no session is sent to the PIN screen', async ({ browser }) => {
+    // A fresh context has no cookie — a stranger who found the URL, or the
+    // counter's phone after the 12h session lapsed. Neither may see the till.
     const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
     const stranger = await context.newPage();
 
-    const blocked = await stranger.goto('/dashboard');
-    expect(blocked?.status()).toBe(404);
+    await stranger.goto('/dashboard');
+    await stranger.waitForURL('**/login');
+    await expect(stranger.locator('input[name="pin"]')).toBeVisible();
 
-    const guessed = await stranger.goto('/dashboard?k=wrong-token');
-    expect(guessed?.status()).toBe(404);
+    await context.close();
+  });
+
+  test('the client-only form pages are covered too', async ({ browser }) => {
+    // These four render no data, so they used to go unguarded — the ?k= gate
+    // was all that kept them off the open internet. They are client components
+    // and cannot call getSession() themselves, so proxy.ts is what covers them.
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const stranger = await context.newPage();
+
+    for (const path of ['/tickets/new', '/expenses/new', '/inventory/new', '/appointments/new']) {
+      await stranger.goto(path);
+      await stranger.waitForURL('**/login');
+    }
+
+    await context.close();
+  });
+
+  test('a wrong PIN does not get in', async ({ browser }) => {
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const guesser = await context.newPage();
+
+    await guesser.goto('/login');
+    await guesser.fill('#pin', '9999');
+    await guesser.click('button[type="submit"]');
+
+    await expect(guesser.locator('text=PIN salah')).toBeVisible();
+    await expect(guesser).toHaveURL(/\/login$/);
 
     await context.close();
   });

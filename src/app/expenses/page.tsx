@@ -12,6 +12,9 @@ import { PlusCircle } from "lucide-react";
 export default async function ExpensesPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  // Owner-only, as it was before the PIN came out. The till stands where
+  // customers and mechanics can see it; takings and margins do not belong there.
+  if (session.role !== "owner") redirect("/dashboard");
 
   const supabase = createAdminClient();
   const { data: expenses } = await supabase

@@ -23,10 +23,6 @@ if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
 const port = process.env.E2E_PORT || '3100';
 const baseURL = process.env.E2E_BASE_URL || `http://localhost:${port}`;
 
-// The secret-link gate runs during the suite; every context has to come in
-// through it exactly like a phone at the counter does.
-export const ACCESS_TOKEN = 'e2e-site-access-token';
-
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -57,9 +53,8 @@ export default defineConfig({
   ],
   webServer: {
     command: `npm run dev -- --port ${port}`,
-    // A static asset, because every page redirects: / sends a visitor through
-    // /login to /dashboard, and the readiness probe keeps no cookies, so it
-    // would bounce between them until it gave up.
+    // A static asset, because the readiness probe keeps no cookies: every page
+    // now redirects it to /login, so it would never see a 200 on a real route.
     url: `${baseURL}/favicon.ico`,
     reuseExistingServer: false,
     timeout: 120 * 1000,
@@ -69,7 +64,6 @@ export default defineConfig({
       NEXT_PUBLIC_SUPABASE_URL: supabaseUrl,
       SUPABASE_SERVICE_ROLE_KEY: supabaseServiceRoleKey,
       SESSION_SECRET: process.env.E2E_SESSION_SECRET || 'e2e-only-session-secret',
-      SITE_ACCESS_TOKEN: ACCESS_TOKEN,
     },
   },
 });

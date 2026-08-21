@@ -1,55 +1,39 @@
 import { NextResponse, type NextRequest } from "next/server";
-import {
-  ACCESS_COOKIE_NAME,
-  ACCESS_TOKEN_PARAM,
-  accessCookieOptions,
-  gateOpensWithoutToken,
-  isPublicPath,
-  secretsMatch,
-} from "@/lib/access";
+import { SESSION_COOKIE_NAME } from "@/lib/session-token";
 
-// The app has no login of its own — the shop asked for a till with nothing to
-// type — so this is what keeps the shop's takings off the open internet. Open
-// the site once per device with ?k=<token> and the cookie carries it from then
-// on. Without SITE_ACCESS_TOKEN set the gate stays open, which is what local
-// development and the E2E defaults rely on — but a production build with the
-// variable missing (a Preview deployment, a dropped env var) would otherwise
-// serve the whole shop to anyone who found the URL, so there it fails closed.
+/**
+ * Sends a visitor with no session to the PIN screen.
+ *
+ * This is a redirect, not the security boundary. It only asks whether a cookie
+ * is present — never whether it is valid, and never what role it carries. Every
+ * page still calls getSession() and every action still runs through
+ * authActionClient or ownerActionClient; those verify the signature and are
+ * what actually keep the shop's books private. Middleware-only auth has been
+ * bypassable in Next before, so nothing here is trusted to stand alone.
+ *
+ * What it buys: the four "new" form pages are client components and cannot call
+ * getSession() themselves, and a page added later is covered before anyone
+ * remembers to guard it.
+ *
+ * It replaces the ?k=<token> gate, which existed only because the till had no
+ * login of its own. With a PIN back in front of the app that reason is gone,
+ * and the token was locking the partner shop out of its own till.
+ */
+function isPublicPath(pathname: string): boolean {
+  return (
+    pathname === "/login" ||
+    // Carries its own bearer secret and arrives with no cookies.
+    pathname.startsWith("/api/cron/") ||
+    pathname.startsWith("/_next/") ||
+    pathname === "/favicon.ico"
+  );
+}
+
 export function proxy(request: NextRequest) {
   if (isPublicPath(request.nextUrl.pathname)) return NextResponse.next();
+  if (request.cookies.has(SESSION_COOKIE_NAME)) return NextResponse.next();
 
-  const token = process.env.SITE_ACCESS_TOKEN;
-  if (!token) {
-    return gateOpensWithoutToken(process.env.NODE_ENV)
-      ? NextResponse.next()
-      : new NextResponse("Not found", { status: 404 });
-  }
-
-  const cookie = request.cookies.get(ACCESS_COOKIE_NAME)?.value;
-  if (cookie && secretsMatch(cookie, token)) {
-    // Re-stamped on the way through, so the year runs from the last visit
-    // rather than the first. A till in daily use never reaches the expiry; the
-    // cookie only lapses after a year of the shop not opening the app at all.
-    // Without this the counter's phone goes dark mid-shift, one year to the day
-    // after setup, and the shop has no idea why.
-    const response = NextResponse.next();
-    response.cookies.set(ACCESS_COOKIE_NAME, token, accessCookieOptions());
-    return response;
-  }
-
-  const provided = request.nextUrl.searchParams.get(ACCESS_TOKEN_PARAM);
-  if (provided && secretsMatch(provided, token)) {
-    // Drop the token from the address bar so it does not end up in a
-    // screenshot, a shared link, or the browser history of a borrowed phone.
-    const clean = new URL(request.nextUrl);
-    clean.searchParams.delete(ACCESS_TOKEN_PARAM);
-    const response = NextResponse.redirect(clean);
-    response.cookies.set(ACCESS_COOKIE_NAME, token, accessCookieOptions());
-    return response;
-  }
-
-  // 404 rather than 401: a wrong guess should not confirm that anything is here.
-  return new NextResponse("Not found", { status: 404 });
+  return NextResponse.redirect(new URL("/login", request.url));
 }
 
 export const config = {
