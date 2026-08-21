@@ -47,6 +47,11 @@ function askHidden(prompt: string): Promise<string> {
 const useProd = process.argv.includes("--prod");
 
 function loadEnvFile() {
+  // Never with --prod. .env.local holds the local stack's URL and demo key, and
+  // letting either reach a production run is how the local key ends up being
+  // presented to the real project.
+  if (useProd) return;
+
   let raw: string;
   try {
     raw = readFileSync(new URL("../.env.local", import.meta.url), "utf8");
@@ -78,11 +83,12 @@ async function client() {
     process.exit(1);
   }
 
-  // Exported already (CI), otherwise asked for. Never taken from a flag.
-  const key =
-    (useProd ? undefined : process.env.SUPABASE_SERVICE_ROLE_KEY) ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    (await askHidden(`Supabase service key for ${url} (input hidden): `));
+  // The production key lives in Vercel and the Supabase dashboard, never in a
+  // file here, so --prod always asks. Locally the stack's key is in .env.local.
+  const key = useProd
+    ? await askHidden("Supabase service key for PRODUCTION (input hidden): ")
+    : process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      (await askHidden(`Supabase service key for ${url} (input hidden): `));
 
   if (!key) {
     console.error("No key given, nothing changed.");
