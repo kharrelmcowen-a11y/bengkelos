@@ -1,5 +1,23 @@
 # Demo BengkelOS untuk bengkel motor
 
+## Demo offline di HP (buat pitching sekarang)
+
+Tanpa database dan tanpa deploy. Jalankan di laptop:
+
+```bash
+npm run demo
+```
+
+Lalu buka alamat `HP:` yang tercetak (mis. `http://192.168.1.5:4173`) di
+browser HP. HP dan laptop harus di Wi-Fi yang sama (atau hotspot dari HP).
+PIN: **2468**. Setelah halaman terbuka, laptop boleh ditutup asal tab tidak
+di-refresh.
+
+Di ⚙️ Beranda: isi nama bengkel yang sedang di-pitch dan nomor WA kamu sendiri.
+"Mulai ulang data demo" mengembalikan data ke awal untuk bengkel berikutnya.
+
+Bagian di bawah ini (app sungguhan + database) baru dipakai setelah ada client.
+
 Cara kerjanya sama seperti demo mobil (`bengkelos-demo`): app yang sama, di-deploy
 ke project Vercel terpisah, dengan data contoh dan PIN demo tertulis di halaman login.
 Bedanya dua hal:
