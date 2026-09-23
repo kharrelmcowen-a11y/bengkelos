@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { shopCopy } from "@/lib/shop-kind";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "BengkelOS",
-  description: "POS, inventory, dan keuangan untuk bengkel mobil",
+  description: `POS, inventory, dan keuangan untuk bengkel ${shopCopy.vehicle}`,
 };
 
 export default function RootLayout({

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ScanLine, Check, X, Zap } from "lucide-react";
+import { shopCopy } from "@/lib/shop-kind";
 
 type InventoryOption = {
   id: string;
@@ -205,7 +206,7 @@ export function ItemForm({
 
         <Input
           name="description"
-          placeholder="Deskripsi (ganti oli, servis rem, dll)"
+          placeholder={shopCopy.itemPlaceholder}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           required

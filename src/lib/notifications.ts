@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { logDatabaseError } from "./logger";
+import { shopCopy } from "./shop-kind";
 
 // Shop-wide low-stock alert, raised when a deduction drops an item to or below
 // its reorder point. Re-alerting on every deduction would bury the bell, so an
@@ -54,8 +55,8 @@ export async function notifyTicketReady(
     type: "ticket_completed",
     title: "Kabari customer",
     message: ticket.waLink
-      ? `${ticket.customerName} — mobil selesai, kirim WA sekarang`
-      : `${ticket.customerName} — mobil selesai, nomor WA belum ada`,
+      ? `${ticket.customerName} — ${shopCopy.vehicle} selesai, kirim WA sekarang`
+      : `${ticket.customerName} — ${shopCopy.vehicle} selesai, nomor WA belum ada`,
     data: { ticket_id: ticket.ticketId, wa_link: ticket.waLink },
   });
 

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { shopCopy } from "@/lib/shop-kind";
 
 export default function NewAppointmentPage() {
   const { execute, isExecuting, result } = useAction(createAppointment);
@@ -62,17 +63,17 @@ export default function NewAppointmentPage() {
         <div className="flex gap-3">
           <div className="flex-1 space-y-1.5">
             <Label htmlFor="brand">Merek (opsional)</Label>
-            <Input id="brand" name="brand" />
+            <Input id="brand" name="brand" placeholder={shopCopy.brandPlaceholder} />
           </div>
           <div className="flex-1 space-y-1.5">
             <Label htmlFor="model">Model (opsional)</Label>
-            <Input id="model" name="model" />
+            <Input id="model" name="model" placeholder={shopCopy.modelPlaceholder} />
           </div>
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="notes">Catatan (opsional)</Label>
-          <Input id="notes" name="notes" placeholder="Keluhan / jenis servis" />
+          <Input id="notes" name="notes" placeholder={shopCopy.notesPlaceholder} />
         </div>
 
         {errorMessage && (

@@ -74,6 +74,14 @@ the hosted project does through default privileges and the local stack does not.
 Rotate the service key with `bash scripts/rotate-service-key.sh` — it reads the
 new value from a hidden prompt, checks it, updates Vercel, redeploys, verifies.
 
+## Demo
+
+The same build serves car and motorcycle shops: `NEXT_PUBLIC_SHOP_KIND=motor`
+swaps the few words that differ (see `src/lib/shop-kind.ts`).
+`npm run seed:demo -- --kind motor` (or `mobil`) fills a separate demo database
+with six weeks of plausible trade — see `outreach/demo_motor.md` for the pitch
+setup. It refuses to run against the shop's own project.
+
 ## Tests
 
 ```bash
