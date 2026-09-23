@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { shopCopy } from "@/lib/shop-kind";
 
 export default function NewTicketPage() {
   const { execute, isExecuting, result } = useAction(createTicket);
@@ -57,11 +58,11 @@ export default function NewTicketPage() {
         <div className="flex gap-3">
           <div className="flex-1 space-y-1.5">
             <Label htmlFor="brand">Merk (opsional)</Label>
-            <Input id="brand" name="brand" />
+            <Input id="brand" name="brand" placeholder={shopCopy.brandPlaceholder} />
           </div>
           <div className="flex-1 space-y-1.5">
             <Label htmlFor="model">Model (opsional)</Label>
-            <Input id="model" name="model" />
+            <Input id="model" name="model" placeholder={shopCopy.modelPlaceholder} />
           </div>
         </div>
 
