@@ -5,26 +5,14 @@
 Tanpa database dan tanpa deploy. Demo-nya satu file saja
 (`demo/bengkel-motor.html`) yang jalan sendiri di browser. PIN: **2468**.
 
-**Cara A — simpan di HP, tanpa laptop (paling praktis pakai data seluler)**
-
 1. Kirim `demo/bengkel-motor.html` ke HP sendiri (WA ke nomor sendiri,
    Telegram "Saved Messages", atau Google Drive), lalu unduh.
 2. Buka file itu dengan **Chrome** (Android: dari notifikasi unduhan atau
    aplikasi Files → pilih Chrome).
 3. Selesai. Jalan offline; internet hanya dipakai untuk font dan tombol WA.
 
-iPhone kadang cuma menampilkan pratinjau tanpa menjalankan halamannya. Kalau
-begitu, pakai cara B.
-
-**Cara B — lewat hotspot HP**
-
-1. Nyalakan hotspot di HP, sambungkan laptop ke hotspot itu.
-2. Di laptop: `npm run demo`.
-3. Buka alamat `HP:` yang tercetak (mis. `http://192.168.43.12:4173`) di
-   browser HP. Tambah `/unduh` di belakang alamatnya untuk sekalian menyimpan
-   file ke HP (lalu lanjut cara A untuk pitch berikutnya).
-
-Setelah halaman terbuka, laptop boleh ditutup asal tab tidak di-refresh.
+Belum dicoba di iPhone: aplikasi Files di iPhone kadang cuma menampilkan
+pratinjau tanpa menjalankan halamannya. Paling aman pakai HP Android.
 
 Di ⚙️ Beranda: isi nama bengkel yang sedang di-pitch dan nomor WA kamu sendiri.
 "Mulai ulang data demo" mengembalikan data ke awal untuk bengkel berikutnya.

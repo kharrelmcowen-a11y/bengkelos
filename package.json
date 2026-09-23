@@ -15,8 +15,7 @@
     "setup:test-data": "tsx scripts/setup-test-data.ts",
     "test": "tsx --test src/**/*.test.ts",
     "set-pin": "tsx scripts/set-staff-pin.ts",
-    "seed:demo": "tsx scripts/seed-demo.ts",
-    "demo": "node scripts/demo-server.mjs"
+    "seed:demo": "tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
