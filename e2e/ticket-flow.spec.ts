@@ -124,8 +124,8 @@ test.describe('Ticket Flow', () => {
     await expect(page.locator('text=B5678ABC')).toBeVisible();
   });
 
-  test('the finance and report pages are open to the till account', async ({ page }) => {
-    // One role now — whoever is at the counter sees the money screens too.
+  test('the owner can open the finance and report pages', async ({ page }) => {
+    // The seeded account is the owner; those two pages are owner-only.
     await page.goto('/finance');
     await expect(page).toHaveURL(/\/finance$/);
     await expect(page.locator('text=Laporan keuangan')).toBeVisible();
