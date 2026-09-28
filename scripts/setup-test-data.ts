@@ -14,11 +14,14 @@ loadE2eEnv();
 
 const supabaseUrl = process.env.E2E_SUPABASE_URL;
 const supabaseServiceKey = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
+// The PIN e2e/auth.setup.ts signs in with, so both read the same variable.
+const staffPin = process.env.E2E_STAFF_PIN;
 
-if (!supabaseUrl || !supabaseServiceKey) {
+if (!supabaseUrl || !supabaseServiceKey || !staffPin) {
   console.error('Missing required environment variables:');
   console.error('- E2E_SUPABASE_URL');
   console.error('- E2E_SUPABASE_SERVICE_ROLE_KEY');
+  console.error('- E2E_STAFF_PIN');
   console.error('\nThis script seeds test data and must point at a dedicated test');
   console.error('Supabase project, not the one in NEXT_PUBLIC_SUPABASE_URL.');
   process.exit(1);
@@ -62,34 +65,52 @@ async function setupTestData() {
       console.log('✓ Created test shop:', shopId);
     }
 
-    // The app signs in whoever visits /login as the shop's single account,
-    // so the seed only needs that one PIN-less cashier row.
+    // An owner, because the suite walks the finance and report pages too, and
+    // those are owner-only.
     const { data: existingStaff } = await supabase
       .from('staff')
       .select('id')
       .eq('shop_id', shopId)
       .limit(1);
 
+    let staffId;
     if (existingStaff && existingStaff.length > 0) {
+      staffId = existingStaff[0].id;
       console.log('Test staff already exists');
     } else {
-      const { error: staffError } = await supabase
+      const { data: newStaff, error: staffError } = await supabase
         .from('staff')
         .insert({
           shop_id: shopId,
           name: 'Bengkel Test',
           pin: null,
-          role: 'cashier',
+          role: 'owner',
           active: true,
-        });
+        })
+        .select('id')
+        .single();
 
-      if (staffError) {
+      if (staffError || !newStaff) {
         console.error('Error creating test staff:', staffError);
         process.exit(1);
       }
 
-      console.log('✓ Created test staff (no PIN)');
+      staffId = newStaff.id;
+      console.log('✓ Created test staff');
     }
+
+    // Hashed inside Postgres, the same path scripts/set-staff-pin.ts takes.
+    const { error: pinError } = await supabase.rpc('set_staff_pin', {
+      p_staff_id: staffId,
+      p_pin: staffPin,
+    });
+
+    if (pinError) {
+      console.error('Error setting test staff PIN:', pinError);
+      process.exit(1);
+    }
+
+    console.log('✓ Set test staff PIN');
 
     // Create some test inventory items
     const { data: existingItems } = await supabase
@@ -124,7 +145,7 @@ async function setupTestData() {
     }
 
     console.log('\n✓ Test data setup complete!');
-    console.log('The app signs in automatically — there is no PIN.');
+    console.log('Sign in with the PIN in E2E_STAFF_PIN.');
     console.log('Test shop ID:', shopId);
   } catch (error) {
     console.error('Error during setup:', error);
