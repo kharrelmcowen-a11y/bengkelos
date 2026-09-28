@@ -23,6 +23,7 @@ E2E_SUPABASE_URL=http://127.0.0.1:54321
 E2E_SUPABASE_ANON_KEY=<anon key from supabase start>
 E2E_SUPABASE_SERVICE_ROLE_KEY=<service_role key from supabase start>
 E2E_SESSION_SECRET=e2e-only-session-secret
+E2E_STAFF_PIN=<any 4-8 digits; the seed sets it, the suite signs in with it>
 ```
 
 `supabase/seed.sql` runs on every `start`/`db reset`. It only grants the API
@@ -43,12 +44,12 @@ pausing another one.
 ## Then
 
 ```bash
-npm run setup:test-data    # seeds a shop, its PIN-less account, and sample inventory
+npm run setup:test-data    # seeds a shop, an owner with E2E_STAFF_PIN, and sample inventory
 npm run test:e2e           # boots its own dev server on port 3100
 ```
 
 `npm run test:e2e:ui` opens the Playwright runner, `npm run test:e2e:debug`
 steps through a spec.
 
-CI skips this suite: the workflow has no database to point it at. Wire the
-`E2E_*` values in as repository secrets to turn it on there.
+CI runs this suite against a local Supabase stack on the runner (Option A);
+the `E2E_*` values are set in `.github/workflows/ci.yml`.
