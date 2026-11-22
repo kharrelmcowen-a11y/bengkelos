@@ -1,0 +1,28 @@
+# Media stays out of git: it is large, binary, and some of it is licensed.
+# Keep the originals on a storage drive in this same folder layout.
+# Git tracks each file's row in RESEARCH/source_registry.csv, not the file itself.
+
+# Everything inside the asset folders except the brand kit
+/ASSETS/*/*
+!/ASSETS/*/.gitkeep
+!/ASSETS/brand/*
+
+# Rendered videos
+/PRODUCTION/exports/*
+!/PRODUCTION/exports/.gitkeep
+
+# Heavy media anywhere in the workspace (including the brand kit)
+*.mp4
+*.mov
+*.mkv
+*.mxf
+*.wav
+*.mp3
+*.m4a
+*.aac
+*.flac
+*.tif
+*.tiff
+*.jp2
+*.psd
+*.zip

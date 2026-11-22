@@ -1,0 +1,11 @@
+location_id,video_id,name,feature_type,countries,region,latitude,longitude,coordinate_source_id,coordinate_status,aoi_notes,candidate_imagery_platforms,notes
+LOC-001,TT-001,Borneo (island),tropical forest,Indonesia; Malaysia; Brunei,Southeast Asia,,,,unverified,The whole island is too large for one frame - choose 1-2 specific areas during research,Landsat; Sentinel-2; Global Forest Watch layers,Frequent cloud cover
+LOC-002,TT-002,Aral Sea,lake (endorheic),Kazakhstan; Uzbekistan,Central Asia,,,,unverified,The whole basin for context; former and current shorelines,Landsat; NASA Worldview (MODIS); Sentinel-2,
+LOC-003,TT-003,Palm Jumeirah,artificial island,United Arab Emirates,Middle East,,,,unverified,The island and the adjacent coastline,Landsat; Sentinel-2; Google Earth Pro historical imagery,
+LOC-004,TT-004,Lake Chad,lake and wetland,Chad; Cameroon; Niger; Nigeria,"Sahel, Africa",,,,unverified,The lake basin including wetlands; define open water vs vegetation,Landsat; NASA Worldview (MODIS); Sentinel-2,Strong seasonal variation
+LOC-005,TT-005,Svalbard Global Seed Vault,facility (underground),Norway,Arctic,,,,unverified,The vault entrance and the surrounding mountainside near Longyearbyen,Sentinel-2; Google Earth,Underground; polar night limits optical imagery for part of the year
+LOC-006,TT-006,Panama Canal,canal,Panama,Central America,,,,unverified,The full route for context; the locks for detail,Landsat; Sentinel-2; Google Earth,Frequent cloud cover likely - check
+LOC-007,TT-007,Amazon road segment (to be chosen),road network in forest,Brazil (to confirm),South America,,,,unverified,"One road segment, to be chosen in research",Landsat; Sentinel-2,
+LOC-008,TT-008,Tokyo metropolitan area,urban area,Japan,East Asia,,,,unverified,"Define and name the boundary used (city, prefecture or metro area)",Landsat; Sentinel-2,
+LOC-009,TT-009,Salar de Atacama,salt flat with evaporation ponds,Chile,South America,,,,unverified,The evaporation pond complexes within the salt flat,Landsat; Sentinel-2; Google Earth,Desert annotation rule
+LOC-010,TT-010,Richat Structure,geological structure,Mauritania,Northwest Africa (Sahara),,,,unverified,The whole structure plus the surrounding desert for scale,Landsat; Sentinel-2; NASA astronaut photography,Desert annotation rule
