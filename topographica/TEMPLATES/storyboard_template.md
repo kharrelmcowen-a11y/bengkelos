@@ -1,11 +1,11 @@
-# Storyboard — [TT-XXX] [Title]
+# Storyboard — [TP-XXX] [Title]
 
-> Copy this file to `CONTENT/storyboards/TT-XXX_storyboard.md`. One storyboard serves both languages; note wherever the ID version needs different on-screen text or timing.
-> Every shot uses a registered asset, and every annotation points to a claim ID.
+> Copy this file to `CONTENT/storyboards/TP-XXX_storyboard.md`. One storyboard serves both languages; note wherever the ID version needs different on-screen text or timing.
+> Every shot uses a registered asset, and every graphic points to a claim ID. Region fills, route lines and pictograms go only on context maps, never on evidence imagery.
 
 | Field | Value |
 |---|---|
-| Video ID | TT-XXX |
+| Video ID | TP-XXX |
 | Script versions | EN v_ · ID v_ |
 | Total shots | |
 | Editing template | `PRODUCTION/editing_templates/…` |
@@ -14,51 +14,55 @@
 
 ```
 y 0     ┌─────────────────┐  no text (platform UI)
-y 220   ├─────────────────┤
-        │▌evidence tag    │
-        │                 │  text-safe area:
-        │     image       │  x 60–900, y 220–1440
+y 240   │ HEADLINE line 1 │  headline zone y 240–430
+        │ HEADLINE line 2 │  (line 2 in amber)
+y 450   │▌tag             │  evidence or map tag y 450–520
+y 520   │                 │
+        │  image focus    │  y 520–1140
         │                 │
-        │   captions      │
+y 1160  │   captions      │  y 1160–1400
 y 1440  ├─────────────────┤
         │ no text (UI)    │
 y 1920  └─────────────────┘
+          text-safe x 60–900
 ```
 
 ## Timeline overview
 
-| Shot | Beat | Time | Asset file | SRC ID | Acquisition date | Credit on screen |
-|---|---|---|---|---|---|---|
-| 01 | 1 Hook | 0:00– | | | | |
-| 02 | | | | | | |
-| 03 | | | | | | |
+| Shot | Beat | Time | Type (evidence / map) | Asset file | SRC ID | Acquisition date | Tag and credit on screen |
+|---|---|---|---|---|---|---|---|
+| 01 | 1 Hook | 0:00– | | | | | |
+| 02 | | | | | | | |
+| 03 | | | | | | | |
 
 ---
 
 ## Shot 01 · Beat 1 · 0:00–0:0_
 
+- **Type:** evidence image / context map
 - **Asset:** file name under `ASSETS/…`
 - **Source:** SRC- · platform · sensor · YYYY-MM-DD
 - **Framing:** what is in frame; north-up? (if rotated, add a north arrow)
-- **Motion:** static / slow push-in / pan (direction) / wipe to shot __
-- **Annotations:** trace line / past line (year) / approx. line / pin / arrow / number / scale bar, with the claim ID for each
-- **On-screen text, EN:**
-- **On-screen text, ID:**
-- **Evidence tag:** `PLATFORM · SENSOR · YYYY-MM-DD` / credit line / (false colour or radar label)
+- **Motion:** static / slow push-in / pan (direction) / draw-on / wipe to shot __
+- **Graphics:** trace line / past line (year) / approx. line / pin or pulse / arrow / number / scale bar. On context maps only: region fill / route line / pictogram. Give the claim ID for each.
+- **Headline, EN:** line 1 / line 2
+- **Headline, ID:** line 1 / line 2
+- **Tag:** evidence tag `PLATFORM · SENSOR · YYYY-MM-DD` + credit (+ false colour or radar label), or map tag `MAP · source`
 - **Narration cue:** the first words of the line this shot sits under
 - **Transition out:** cut / wipe / short dissolve (only between co-registered images)
 - **Notes:**
 
 ## Shot 02 · Beat _ · 0:__–0:__
 
+- **Type:**
 - **Asset:**
 - **Source:**
 - **Framing:**
 - **Motion:**
-- **Annotations:**
-- **On-screen text, EN:**
-- **On-screen text, ID:**
-- **Evidence tag:**
+- **Graphics:**
+- **Headline, EN:**
+- **Headline, ID:**
+- **Tag:**
 - **Narration cue:**
 - **Transition out:**
 - **Notes:**

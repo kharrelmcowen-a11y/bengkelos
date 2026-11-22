@@ -1,8 +1,8 @@
-# TERRA TRACE — Production Workspace
+# Topographica — Production Workspace
 
 **The Stories Written on Earth.**
 
-This is the production system for TERRA TRACE, a satellite-driven geography documentary channel run by one person. It makes vertical Shorts (9:16, 1080×1920, 40–60 s) in English first and Indonesian second. They are published on YouTube Shorts and distributed to Instagram Reels and TikTok.
+This is the production system for Topographica (YouTube @topographica), a satellite-driven geography documentary channel run by one person. It makes vertical Shorts (9:16, 1080×1920, 40–60 s) in English first and Indonesian second. They are published on YouTube Shorts and distributed to Instagram Reels and TikTok.
 
 This folder is a workspace, not an app. Everything in it is Markdown or CSV, so it opens in any text editor, spreadsheet or phone, and nothing needs installing.
 
@@ -20,14 +20,14 @@ This folder is a workspace, not an app. Everything in it is Markdown or CSV, so 
 
 1. **Nothing is invented.** A statistic, coordinate, date or citation goes into a script only after it is in `RESEARCH/source_registry.csv` with a URL you opened yourself.
 2. **What you see is not why it happened.** Visual observations and proven explanations stay separate in the research, in the script and on screen.
-3. **Every image carries its source and date.** It is shown on screen for as long as the image is visible, and listed in the description.
-4. **No AI-generated or AI-enhanced satellite evidence.** Use real imagery only, processed in ways you can describe.
+3. **Every image carries its source.** Evidence images also show their date, and every tag stays on screen for as long as the image is visible. Context maps are labelled as maps. All of it is listed in the description.
+4. **No AI-generated or AI-enhanced imagery.** Use real imagery only, processed in ways you can describe. The only AI in a video is the narration voice, and it is disclosed.
 5. **A video ships only after its checklists pass.** First `TEMPLATES/video_checklist.md`, then `TEMPLATES/publishing_checklist.md`.
 
 ## Folder map
 
 ```
-terra-trace/
+topographica/
 ├── README.md                  operating instructions (this file)
 ├── BRAND_GUIDELINES.md        identity, voice, claim language, visual system, localization
 ├── CONTENT_STRATEGY.md        pillars, idea scoring, backlog, cadence, platforms, metrics
@@ -37,24 +37,25 @@ terra-trace/
 │   ├── source_registry.csv    every source and every image used, one row each
 │   ├── location_database.csv  every location, with its verified coordinates
 │   ├── style_references.md    amati–tiru–modifikasi notes on reference channels
-│   └── episodes/              filled research files: TT-002_research.md
+│   └── episodes/              filled research files: TP-002_research.md
 ├── CONTENT/
 │   ├── idea_bank.csv          the backlog; one row per video; status lives here
-│   ├── scripts/english/       TT-002_EN_script.md
-│   ├── scripts/indonesia/     TT-002_ID_script.md
-│   ├── storyboards/           TT-002_storyboard.md
-│   └── published/             TT-002_release.md, the frozen record of what went out
+│   ├── scripts/english/       TP-002_EN_script.md
+│   ├── scripts/indonesia/     TP-002_ID_script.md
+│   ├── storyboards/           TP-002_storyboard.md
+│   └── published/             TP-002_release.md, the frozen record of what went out
 ├── ASSETS/                    media (kept out of git, see "Media and git")
 │   ├── brand/                 logo, fonts, colour swatches, end card (kept in git)
-│   ├── satellite_imagery/     one subfolder per video: TT-002/
-│   ├── maps/                  TT-002/
-│   ├── audio/                 TT-002/ for voiceover; library/ for licensed music
-│   └── footage/               TT-002/ for licensed or public-domain video
+│   ├── satellite_imagery/     one subfolder per video: TP-002/
+│   ├── maps/                  TP-002/
+│   ├── audio/                 TP-002/ for voiceover; library/ for licensed music
+│   └── footage/               TP-002/ for licensed or public-domain video
 ├── PRODUCTION/
+│   ├── tts_lexicon.csv        how to make the AI voice say each tricky name
 │   ├── editing_templates/     editor project templates and the safe-zone overlay
-│   ├── captions/              TT-002_EN.srt, TT-002_ID.srt
-│   ├── qc/                    TT-002_qc.md, the filled video checklist
-│   └── exports/               TT-002_EN_v1.mp4 (kept out of git)
+│   ├── captions/              TP-002_EN.srt, TP-002_ID.srt
+│   ├── qc/                    TP-002_qc.md, the filled video checklist
+│   └── exports/               TP-002_EN_v1.mp4 (kept out of git)
 ├── ANALYTICS/
 │   ├── publishing_log.csv     one row per upload, per platform, per language
 │   └── performance_log.csv    one row per check-in (48 h / 7 d / 28 d)
@@ -65,32 +66,33 @@ terra-trace/
     └── publishing_checklist.md
 ```
 
-Three items were added to the original plan, each for an operational reason:
+Four items were added to the original plan, each for an operational reason:
 
 - `RESEARCH/episodes/` holds the filled research files, so they don't mix with the template.
 - `PRODUCTION/qc/` keeps each video's filled checklist as proof that it passed its gates.
 - `RESEARCH/style_references.md` is where the study of reference channels lives.
+- `PRODUCTION/tts_lexicon.csv` holds the pronunciation fixes for the AI narration voice, so a mispronounced place name never ships twice.
 
 ## One video, one ID
 
-Every video gets an ID when it enters the idea bank: `TT-001`, `TT-002`, and so on. IDs are never reused, not even for dropped ideas. An ID records when an idea arrived, not the order videos are made in. Every filename starts with the ID, so searching for `TT-002` finds everything about that video.
+Every video gets an ID when it enters the idea bank: `TP-001`, `TP-002`, and so on. IDs are never reused, not even for dropped ideas. An ID records when an idea arrived, not the order videos are made in. Every filename starts with the ID, so searching for `TP-002` finds everything about that video.
 
 | Stage | File | Copied from |
 |---|---|---|
-| Research | `RESEARCH/episodes/TT-002_research.md` | `RESEARCH/research_template.md` |
-| Script, English | `CONTENT/scripts/english/TT-002_EN_script.md` | `TEMPLATES/script_template.md` |
-| Script, Indonesian | `CONTENT/scripts/indonesia/TT-002_ID_script.md` | `TEMPLATES/script_template.md` |
-| Storyboard | `CONTENT/storyboards/TT-002_storyboard.md` | `TEMPLATES/storyboard_template.md` |
-| Imagery | `ASSETS/satellite_imagery/TT-002/…` | named as in SOP Appendix C |
-| Captions | `PRODUCTION/captions/TT-002_EN.srt` | exported from the editor |
-| QC record | `PRODUCTION/qc/TT-002_qc.md` | `TEMPLATES/video_checklist.md` |
-| Export | `PRODUCTION/exports/TT-002_EN_v1.mp4` | exported from the editor |
-| Release record | `CONTENT/published/TT-002_release.md` | `TEMPLATES/publishing_checklist.md` |
+| Research | `RESEARCH/episodes/TP-002_research.md` | `RESEARCH/research_template.md` |
+| Script, English | `CONTENT/scripts/english/TP-002_EN_script.md` | `TEMPLATES/script_template.md` |
+| Script, Indonesian | `CONTENT/scripts/indonesia/TP-002_ID_script.md` | `TEMPLATES/script_template.md` |
+| Storyboard | `CONTENT/storyboards/TP-002_storyboard.md` | `TEMPLATES/storyboard_template.md` |
+| Imagery | `ASSETS/satellite_imagery/TP-002/…` | named as in SOP Appendix C |
+| Captions | `PRODUCTION/captions/TP-002_EN.srt` | exported from the editor |
+| QC record | `PRODUCTION/qc/TP-002_qc.md` | `TEMPLATES/video_checklist.md` |
+| Export | `PRODUCTION/exports/TP-002_EN_v1.mp4` | exported from the editor |
+| Release record | `CONTENT/published/TP-002_release.md` | `TEMPLATES/publishing_checklist.md` |
 
-To create a new video's files, run this from inside `terra-trace/`:
+To create a new video's files, run this from inside `topographica/`:
 
 ```bash
-ID=TT-002
+ID=TP-002
 cp RESEARCH/research_template.md     RESEARCH/episodes/${ID}_research.md
 cp TEMPLATES/script_template.md      CONTENT/scripts/english/${ID}_EN_script.md
 cp TEMPLATES/script_template.md      CONTENT/scripts/indonesia/${ID}_ID_script.md
@@ -142,11 +144,21 @@ idea_bank.csv ── video_id ──┬── location_database.csv  (location_i
 
 ## Media and git
 
-Media files are large, binary and sometimes licensed, so `terra-trace/.gitignore` keeps them out of git. It ignores everything inside the `ASSETS/` subfolders except `ASSETS/brand/`, everything in `PRODUCTION/exports/`, and video, audio, GeoTIFF and PSD files anywhere in the workspace. Keep your media on a storage drive, such as Google Drive, using this same folder layout. Git keeps each file's row in `source_registry.csv`, and that row is what proves where the file came from.
+Media files are large, binary and sometimes licensed, so `topographica/.gitignore` keeps them out of git. It ignores everything inside the `ASSETS/` subfolders except `ASSETS/brand/`, everything in `PRODUCTION/exports/`, and video, audio, GeoTIFF and PSD files anywhere in the workspace. Keep your media on a storage drive, such as Google Drive, using this same folder layout. Git keeps each file's row in `source_registry.csv`, and that row is what proves where the file came from.
 
 ## Current state (2026-11-22)
 
-- The idea bank holds 10 research candidates, all at `idea`. None is verified, and their working titles are not final.
-- The source registry is empty and no coordinates are verified. That is deliberate: rows are added only from sources actually opened.
-- The visual style is a draft (v0) waiting on the style decision. There is no logo yet.
-- The first episode recommended in CONTENT_STRATEGY.md §4 is TT-002 (Aral Sea).
+- **Brand:** Topographica, YouTube @topographica. Tagline: "The Stories Written on Earth."
+- **Style, decided 2026-11-22:**
+  - Visual: real dated satellite evidence plus explainer graphics on context maps, with no characters.
+  - Narration: an AI voice in English and Indonesian, disclosed.
+  - Indonesian register: relaxed but smart (*santai-cerdas*).
+  - Details and reasons are in BRAND_GUIDELINES.md and RESEARCH/style_references.md.
+- **Still open:**
+  - The ending style (the recommended default is in the brand guidelines, marked DRAFT).
+  - The logo.
+  - The choice of TTS tool and brand voices.
+  - Whether the Indonesian versions get separate accounts (CONTENT_STRATEGY §7).
+- **Ideas:** the idea bank holds 10 research candidates, all at `idea`. None is verified, and their working titles are not final.
+- **Sources:** the source registry is empty and no coordinates are verified. That is deliberate: rows are added only from sources actually opened.
+- **First episode:** TP-002 (Aral Sea) is recommended in CONTENT_STRATEGY.md §4.

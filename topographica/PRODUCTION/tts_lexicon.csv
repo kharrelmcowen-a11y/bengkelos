@@ -1,0 +1,29 @@
+language,term,used_in,tts_input,verified_by_ear,notes
+EN,Borneo,TP-001,,N,test with the brand voice
+EN,Aral,TP-002,,N,test with the brand voice
+EN,Kazakhstan,TP-002,,N,test with the brand voice
+EN,Uzbekistan,TP-002,,N,test with the brand voice
+EN,Jumeirah,TP-003,,N,test with the brand voice
+EN,Cameroon,TP-004,,N,test with the brand voice
+EN,Niger,TP-004,,N,"the country, not the river; test with the brand voice"
+EN,Svalbard,TP-005,,N,test with the brand voice
+EN,Longyearbyen,TP-005,,N,test with the brand voice
+EN,Atacama,TP-009,,N,test with the brand voice
+EN,Salar de Atacama,TP-009,,N,test with the brand voice
+EN,Richat,TP-010,,N,test with the brand voice
+EN,Mauritania,TP-010,,N,test with the brand voice
+EN,Landsat,all,,N,test with the brand voice
+EN,Sentinel,all,,N,test with the brand voice
+EN,Copernicus,all,,N,test with the brand voice
+EN,MODIS,all,,N,test with the brand voice
+ID,nggak,all,,N,test with the brand voice
+ID,gimana,all,,N,test with the brand voice
+ID,Landsat,all,,N,test with the brand voice
+ID,Sentinel,all,,N,test with the brand voice
+ID,Copernicus,all,,N,test with the brand voice
+ID,km²,all,,N,write 'kilometer persegi' in the narration text
+ID,Jumeirah,TP-003,,N,test with the brand voice
+ID,Svalbard,TP-005,,N,test with the brand voice
+ID,Longyearbyen,TP-005,,N,test with the brand voice
+ID,Atacama,TP-009,,N,test with the brand voice
+ID,Richat,TP-010,,N,test with the brand voice

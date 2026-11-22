@@ -1,6 +1,6 @@
-# Research File — [TT-XXX] [Working title]
+# Research File — [TP-XXX] [Working title]
 
-> Copy this file to `RESEARCH/episodes/TT-XXX_research.md` and fill it top to bottom.
+> Copy this file to `RESEARCH/episodes/TP-XXX_research.md` and fill it top to bottom.
 > - Write `UNKNOWN` rather than guess.
 > - Never enter a number, date, coordinate or citation that you haven't opened at its source.
 > - Register every source in `RESEARCH/source_registry.csv` first, then refer to it here by its SRC ID.
@@ -9,7 +9,7 @@
 
 | Field | Value |
 |---|---|
-| Video ID | TT-XXX |
+| Video ID | TP-XXX |
 | Working title | |
 | Content pillar | Earth Investigation / Earth Through Time / Hidden Earth / Human Geography |
 | Story shape | Before/After / What Is This? / Why Here? |
@@ -95,8 +95,8 @@ Every factual sentence in the script must trace back to a row here. The rungs ar
 
 | Claim ID | Claim (as you would say it) | Rung | SRC IDs | Method (rung 2 only) | Status (verified / needs source / rejected) |
 |---|---|---|---|---|---|
-| TT-XXX-C01 | | | | | |
-| TT-XXX-C02 | | | | | |
+| TP-XXX-C01 | | | | | |
+| TP-XXX-C02 | | | | | |
 
 ## 9. Verified conclusions
 
@@ -124,7 +124,7 @@ These are plausible but not proven. They may appear in the script only with rung
 
 ## 13. Research gate
 
-Run section A of `TEMPLATES/video_checklist.md` in `PRODUCTION/qc/TT-XXX_qc.md`.
+Run section A of `TEMPLATES/video_checklist.md` in `PRODUCTION/qc/TP-XXX_qc.md`.
 
 | Result | Date | Notes |
 |---|---|---|

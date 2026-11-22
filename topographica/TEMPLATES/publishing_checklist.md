@@ -1,13 +1,13 @@
-# Publishing Checklist and Release Record — [TT-XXX]
+# Publishing Checklist and Release Record — [TP-XXX]
 
-> Copy this file to `CONTENT/published/TT-XXX_release.md` once the video passes QC.
+> Copy this file to `CONTENT/published/TP-XXX_release.md` once the video passes QC.
 > Filled in, it is the permanent record of what was published, where and in which words. After publishing it is frozen; corrections go through SOP stage 10.
 
 ## 1. Before upload
 
-- [ ] `PRODUCTION/qc/TT-XXX_qc.md`: every gate has passed, in both languages.
-- [ ] Exports are ready: `TT-XXX_EN_v_.mp4` and `TT-XXX_ID_v_.mp4`.
-- [ ] Captions are ready: `TT-XXX_EN.srt` and `TT-XXX_ID.srt`.
+- [ ] `PRODUCTION/qc/TP-XXX_qc.md`: every gate has passed, in both languages.
+- [ ] Exports are ready: `TP-XXX_EN_v_.mp4` and `TP-XXX_ID_v_.mp4`.
+- [ ] Captions are ready: `TP-XXX_EN.srt` and `TP-XXX_ID.srt`.
 
 ## 2. Metadata master
 
@@ -38,8 +38,9 @@ Image credits:
 - …
 
 Music: [track — artist — source / licence]
+Narration: AI voice
 
-TERRA TRACE — The Stories Written on Earth.
+Topographica — The Stories Written on Earth.
 ```
 
 ### Deskripsi (ID)
@@ -59,12 +60,14 @@ Kredit citra:
 - …
 
 Musik: [judul — artis — sumber / lisensi]
+Narasi: suara AI
 
-TERRA TRACE — Kisah yang Tertulis di Bumi.
+Topographica — Kisah yang Tertulis di Bumi.
 ```
 
 - [ ] **Description** filled in, in both languages.
 - [ ] **Source attribution:** every source in the script's citation list appears, and every image credit uses its exact original wording, in both languages.
+- [ ] The description says the narration is an AI voice.
 
 ### Hashtags
 
@@ -86,7 +89,7 @@ Use 3–5 relevant tags covering the place and the topic. Don't add unrelated tr
 - [ ] The video language is set (EN / ID).
 - [ ] The .srt captions are uploaded, or the auto-captions are checked.
 - [ ] Audience ("made for kids") is chosen deliberately.
-- [ ] The altered or synthetic content question is answered truthfully.
+- [ ] The altered or synthetic content question is answered truthfully under YouTube's current rules; the narration is an AI voice.
 - [ ] The pinned comment is posted.
 
 | URL | Publish date | Time (local) |
@@ -98,7 +101,7 @@ Use 3–5 relevant tags covering the place and the topic. Don't add unrelated tr
 - [ ] The caption has a one-line summary, the main sources and the image credits.
 - [ ] Cover frame chosen, with its crop on the profile grid checked.
 - [ ] The file is clean, with no other platform's watermark.
-- [ ] The AI label is used only if it applies.
+- [ ] The AI label is applied according to Instagram's current rules for AI-generated audio.
 
 | URL | Publish date | Time (local) |
 |---|---|---|
@@ -109,7 +112,7 @@ Use 3–5 relevant tags covering the place and the topic. Don't add unrelated tr
 - [ ] The caption has a one-line summary, the main sources and the image credits.
 - [ ] Captions are on.
 - [ ] The file is clean, with no other platform's watermark.
-- [ ] The AI-generated content label is used only if it applies.
+- [ ] The AI-generated content label is applied according to TikTok's current rules for AI-generated audio.
 
 | URL | Publish date | Time (local) |
 |---|---|---|
